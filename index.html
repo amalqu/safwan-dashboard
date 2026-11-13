@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pakkawaru Group — Executive BI & Realtime Financial Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pakkawaru Group — Executive Financial Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,401 +12,276 @@
 </head>
 <body>
 
-  <!-- ================= HEADER UTAMA: PAKKAWARU GROUP ================= -->
-  <header class="top-header">
-    <div class="header-left">
-      <div class="brand-logo" id="btnHomeLogo">
-        <div class="logo-dots">
-          <span class="dot dot-blue"></span>
-          <span class="dot dot-green"></span>
-          <span class="dot dot-purple"></span>
+  <!-- ================= GERBANG KEAMANAN: USERNAME + PASSWORD + PIN ================= -->
+  <div id="securityGateOverlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="logo-mark">
+          <span class="m-bar b-blue"></span>
+          <span class="m-bar b-green"></span>
+          <span class="m-bar b-indigo"></span>
         </div>
-        <div class="brand-title-wrap">
-          <span class="brand-text">Pakkawaru<span class="brand-sub">Group</span></span>
-          <span class="brand-tagline">Holding Intelligence System</span>
+        <div>
+          <h2>Pakkawaru Group</h2>
+          <p>Executive Financial & Operations Portal</p>
         </div>
       </div>
 
-      <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" id="globalSearchInput" placeholder="Cari entitas, Order ID, produk Al-Quran, atau tanggal..." />
-      </div>
+      <form id="authLoginForm" autocomplete="off">
+        <div class="auth-field">
+          <label for="authUsername">Username</label>
+          <input type="text" id="authUsername" placeholder="Masukkan username eksekutif" required />
+        </div>
+
+        <div class="auth-field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" placeholder="Masukkan password" required />
+        </div>
+
+        <div class="auth-field">
+          <label for="authPinInput">Kode PIN Keamanan (6 Digit)</label>
+          <input type="password" id="authPinInput" maxlength="6" inputmode="numeric" placeholder="••••••" required />
+          <small class="auth-hint">Verifikasi 2 langkah wajib untuk membuka data finansial</small>
+        </div>
+
+        <div id="authErrorMsg" class="auth-error hidden">Kredensial Username, Password, atau PIN tidak valid.</div>
+
+        <button type="submit" class="btn-auth-submit">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Verifikasi & Buka Dashboard</span>
+        </button>
+      </form>
     </div>
+  </div>
 
-    <div class="header-right">
-      <!-- Sakelar Mode Pengakuan Omset Emas (Dibagi 3 sesuai Audio vs 100% Riil) -->
-      <button class="gold-rule-badge active" id="btnToggleGoldRule" title="Klik untuk beralih antara Omset Emas Dibagi 3 (Standar Dashboard Pakkawaru) atau Penjualan Riil 100%">
-        <span class="rule-dot"></span>
-        <span id="goldRuleText">Omset Emas: Dibagi 3 (÷3)</span>
-      </button>
+  <!-- ================= WRAPPER APLIKASI UTAMA ================= -->
+  <div id="appMainWrapper" class="app-wrapper hidden">
 
-      <div class="sync-badge" id="syncStatusBadge">
-        <span class="pulse-dot"></span>
-        <span id="lastSyncText">Menghubungkan 11 Sheet...</span>
-      </div>
-
-      <button class="btn-primary-create" id="btnSyncNow">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M21 2v6h-6"></path>
-          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-          <path d="M3 22v-6h6"></path>
-          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-        </svg>
-        <span>Sync Live</span>
-      </button>
-
-      <button class="icon-btn" id="btnOpenConfig" title="Pengaturan Spreadsheet & Firebase">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      </button>
-    </div>
-  </header>
-
-  <!-- ================= 7 TAB ORGANISASI PAKKAWARU GROUP ================= -->
-  <nav class="sub-navbar">
-    <div class="nav-tabs" id="mainNavTabs">
-      <button class="nav-tab active" data-tab="holding">🏛️ Holding & Regional</button>
-      <button class="nav-tab" data-tab="safwan">📦 PT Safwan Berkah</button>
-      <button class="nav-tab" data-tab="ansan">📦 PT BQY Ansan</button>
-      <button class="nav-tab" data-tab="amalqu">🤝 Yayasan Amalqu</button>
-      <button class="nav-tab" data-tab="latihhobi">🎓 Latih Hobi</button>
-      <button class="nav-tab" data-tab="sjp">🪙 CV SJP (Emas ÷3)</button>
-      <button class="nav-tab" data-tab="ppm">🪙 PPM (Emas ÷3)</button>
-    </div>
-  </nav>
-
-  <!-- ================= BAR FILTER RENTANG TANGGAL & TARGET PERIODE ================= -->
-  <section class="date-filter-ribbon">
-    <div class="ribbon-inner">
-      <div class="date-picker-group">
-        <span class="ribbon-label">📅 Filter Periode Tanggal:</span>
-        <div class="date-inputs">
-          <input type="date" id="startDateInput" class="date-input-box" value="2026-11-01" min="2026-07-01" max="2026-12-31" />
-          <span class="date-sep">s/d</span>
-          <input type="date" id="endDateInput" class="date-input-box" value="2026-11-10" min="2026-07-01" max="2026-12-31" />
+    <!-- HEADER ATAS -->
+    <header class="top-header">
+      <div class="header-left">
+        <div class="brand-logo" id="btnHomeLogo">
+          <div class="logo-mark">
+            <span class="m-bar b-blue"></span>
+            <span class="m-bar b-green"></span>
+            <span class="m-bar b-indigo"></span>
+          </div>
+          <div class="brand-title-wrap">
+            <span class="brand-text">Pakkawaru<span class="brand-sub">Group</span></span>
+            <span class="brand-tagline">Realtime Financial & Regional BI</span>
+          </div>
         </div>
-        <div class="preset-btns">
-          <button class="preset-btn" data-preset="5days">1–5 Nov (5 Hr)</button>
-          <button class="preset-btn active" data-preset="10days">1–10 Nov (10 Hr)</button>
-          <button class="preset-btn" data-preset="15days">1–15 Nov (15 Hr)</button>
-          <button class="preset-btn" data-preset="fullmonth">Full Nov (30 Hr)</button>
+
+        <div class="fx-badge" id="fxRateBadge" title="Kurs Konversi Realtime Ringgit Malaysia (MYR) ke Rupiah (IDR)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="fxRateText">1 MYR = Rp3.580</span>
         </div>
       </div>
 
-      <div class="period-summary-chips">
-        <div class="summary-chip chip-blue">
-          <span>Durasi Terpilih:</span>
-          <strong id="activeDaysCountText">10 Hari</strong>
+      <div class="header-right">
+        <div class="sync-badge">
+          <span class="pulse-dot"></span>
+          <span id="lastSyncText">Realtime Active</span>
         </div>
-        <div class="summary-chip chip-purple">
-          <span>Target Periode Ini:</span>
-          <strong id="ribbonPeriodTargetText">Rp2.767.306.200</strong>
+
+        <button class="btn-header-action" id="btnSyncNow">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21 2v6h-6"></path>
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+            <path d="M3 22v-6h6"></path>
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+          </svg>
+          <span>Sync Data</span>
+        </button>
+
+        <button class="icon-btn" id="btnOpenConfig" title="Pengaturan Spreadsheet, Kurs MYR & Firebase">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
+        <button class="icon-btn danger-hover" id="btnLockSession" title="Kunci Sesi Dashboard">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- NAVIGASI 7 TAB ENTITAS (100% BEBAS EMOJI MANUAL) -->
+    <nav class="sub-navbar">
+      <div class="nav-tabs" id="mainNavTabs">
+        <button class="nav-tab active" data-tab="holding">Konsolidasi Pakkawaru</button>
+        <button class="nav-tab" data-tab="safwan">PT Safwan Berkah</button>
+        <button class="nav-tab" data-tab="ansan">PT BQY Ansan</button>
+        <button class="nav-tab" data-tab="amalqu">Yayasan Amalqu</button>
+        <button class="nav-tab" data-tab="latihhobi">Latih Hobi</button>
+        <button class="nav-tab" data-tab="sjp">CV SJP (Emas)</button>
+        <button class="nav-tab" data-tab="ppm">PPM (Emas)</button>
+      </div>
+    </nav>
+
+    <!-- PITA FILTER PERIODE & RENTANG TANGGAL -->
+    <section class="filter-bar">
+      <div class="filter-bar-inner">
+        <div class="filter-group-left">
+          <div class="filter-item">
+            <label for="monthSelector">Bulan Laporan</label>
+            <select id="monthSelector" class="select-control">
+              <option value="2026-11" selected>November 2026 (Realtime Aktif)</option>
+              <option value="2026-10">Oktober 2026 (Historis)</option>
+              <option value="2026-09">September 2026 (Historis)</option>
+              <option value="2026-08">Agustus 2026 (Historis)</option>
+              <option value="2026-07">Juli 2026 (Historis)</option>
+              <option value="2026-06">Juni 2026 (Historis)</option>
+              <option value="2026-05">Mei 2026 (Historis)</option>
+              <option value="2026-04">April 2026 (Historis)</option>
+              <option value="2026-03">Maret 2026 (Historis)</option>
+              <option value="2026-02">Februari 2026 (Historis)</option>
+              <option value="2026-01">Januari 2026 (Historis)</option>
+              <option value="2026-ALL">Akumulasi Tahunan 2026</option>
+            </select>
+          </div>
+
+          <div class="preset-buttons" id="realtimeDatePresets">
+            <button class="chip-btn active" data-range="this_month">Bulan Ini</button>
+            <button class="chip-btn" data-range="last_7">7 Hari Terakhir</button>
+            <button class="chip-btn" data-range="last_30">30 Hari Terakhir</button>
+            <button class="chip-btn" data-range="custom">Custom Tanggal</button>
+          </div>
+
+          <div class="custom-date-box" id="customDateWrap">
+            <input type="date" id="filterStartDate" value="2026-11-01" min="2026-11-01" max="2026-11-30" />
+            <span>s/d</span>
+            <input type="date" id="filterEndDate" value="2026-11-13" min="2026-11-01" max="2026-11-30" />
+          </div>
         </div>
-        <div class="summary-chip" id="ribbonAchieveChip">
-          <span>Status Periode:</span>
-          <strong id="ribbonAchieveText">87,06% (Belum Achieve)</strong>
+
+        <div class="filter-group-right">
+          <div class="metric-pill">
+            <span>Durasi Aktif:</span>
+            <strong id="activeDurationText">13 Hari</strong>
+          </div>
+          <div class="metric-pill pill-indigo">
+            <span>Target Periode:</span>
+            <strong id="activePeriodTargetText">Rp0</strong>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ================= KANVAS UTAMA ================= -->
-  <main class="main-canvas">
-
-    <!-- BARIS JUDUL ENTITAS & SUB-SWITCH TOKO / FILTER AREA -->
-    <div class="page-header-row">
-      <div>
-        <div class="breadcrumb-badge" id="entityRegionBadge">KONSOLIDASI NASIONAL • 6 ENTITAS</div>
-        <h1 class="page-title" id="currentPageTitle">Pakkawaru Group — Executive Summary</h1>
-        <p class="page-subtitle" id="currentPageSubtitle">Konsolidasi Target per Tanggal, Target Bulanan & Realisasi (Omset Emas SJP & PPM Dibagi 3)</p>
-      </div>
-
-      <div class="page-filters">
-        <!-- Sub-Switch Toko (Muncul di Tab PT Safwan & PT BQY Ansan) -->
-        <div class="store-pill-group hidden" id="storeSubSwitch"></div>
-
-        <!-- Filter Area (Muncul di Tab Holding) -->
-        <div class="store-pill-group" id="holdingAreaSwitch">
-          <button class="sub-pill active" data-area="all">Semua Area</button>
-          <button class="sub-pill" data-area="Bandung">Area Bandung</button>
-          <button class="sub-pill" data-area="Gorontalo">Area Gorontalo</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= GRID 2 KOLOM KRAFTS ================= -->
-    <section class="krafts-grid">
-
-      <!-- KOLOM KIRI (UTAMA) -->
-      <div class="grid-left-col">
-
-        <!-- 1. TIGA KARTU KPI PASTEL (REALISASI PERIODE, TARGET PER TANGGAL, TARGET BULANAN) -->
-        <div class="card kpi-trio-container">
-          <div class="kpi-pastel-card pastel-blue">
-            <div class="kpi-card-top">
-              <span class="kpi-label" id="kpi1Label">Realisasi (Periode Terpilih)</span>
-              <span class="kpi-period-pill" id="kpi1Pill">1–10 Nov</span>
-            </div>
-            <div class="kpi-big-value" id="kpi1Value">Rp0</div>
-            <div class="kpi-trend" id="kpi1TrendWrap">
-              <span id="kpi1TrendText">0% dari Target Periode</span>
-            </div>
-          </div>
-
-          <div class="kpi-pastel-card pastel-indigo">
-            <div class="kpi-card-top">
-              <span class="kpi-label" id="kpi2Label">Target Per Tanggal (10 Hari)</span>
-              <span class="kpi-period-pill" id="kpi2Pill">Target Periode</span>
-            </div>
-            <div class="kpi-big-value" id="kpi2Value">Rp0</div>
-            <div class="kpi-trend" id="kpi2TrendWrap">
-              <span id="kpi2TrendText">Target Harian: Rp0 / hari</span>
-            </div>
-          </div>
-
-          <div class="kpi-pastel-card pastel-purple">
-            <div class="kpi-card-top">
-              <span class="kpi-label" id="kpi3Label">Target Bulanan Penuh (30 Hr)</span>
-              <span class="kpi-period-pill" id="kpi3Pill">Full Bulan</span>
-            </div>
-            <div class="kpi-big-value" id="kpi3Value">Rp0</div>
-            <div class="kpi-trend" id="kpi3TrendWrap">
-              <span id="kpi3TrendText">Capaian Bulanan: 0%</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. BARIS KARTU KONTEKSTUAL (KOMPARASI AREA / STATUS ORDER / EMAS RIIL VS DIBAGI 3) -->
-        <div id="contextualCardsContainer" class="contextual-cards-grid"></div>
-
-        <!-- 3. KARTU GRAFIK BATANG TIGA / GANDA INTERAKTIF -->
-        <div class="card chart-main-card">
-          <div class="card-header-flex">
-            <div>
-              <h2 class="card-title" id="mainChartTitle">Perbandingan Target Periode, Realisasi, & Target Bulanan</h2>
-              <p class="card-subtitle" id="mainChartSubtitle">Memantau apakah realisasi sudah melampaui target pada rentang tanggal terpilih</p>
-            </div>
-            <div class="chart-legend-controls">
-              <label class="legend-check">
-                <span class="legend-box box-amber"></span>
-                <span id="legend1Text">Target Periode</span>
-              </label>
-              <label class="legend-check">
-                <span class="legend-box box-green"></span>
-                <span id="legend2Text">Realisasi Periode</span>
-              </label>
-              <select id="holdingChartMode" class="clean-select-sm">
-                <option value="period_vs_actual">Target Periode vs Realisasi</option>
-                <option value="monthly_vs_actual">Target Bulanan vs Realisasi</option>
-                <option value="ecommerce">5 Toko E-Commerce (Gross vs Net)</option>
-                <option value="regional">Bandung vs Gorontalo</option>
-              </select>
-            </div>
-          </div>
-          <div class="canvas-wrapper-bar">
-            <canvas id="revenueBarChart"></canvas>
-          </div>
-        </div>
-
-        <!-- 4. KARTU TABEL UTAMA DENGAN TARGET PER TANGGAL & STATUS ACHIEVE -->
-        <div class="card table-card">
-          <div class="card-header-flex">
-            <div>
-              <h2 class="card-title" id="mainTableTitle">Matriks Kinerja Entitas (Target Per Tanggal vs Target Bulanan)</h2>
-              <p class="card-subtitle" id="mainTableSubtitle">Omset SJP & PPM otomatis dibagi 3 sesuai standar pelaporan Pakkawaru Group</p>
-            </div>
-            <div class="table-right-tools">
-              <input type="text" id="localTableSearch" class="clean-input-sm" placeholder="Filter baris tabel..." />
-            </div>
-          </div>
-
-          <div class="table-responsive">
-            <table class="krafts-table">
-              <thead id="mainTableHead"></thead>
-              <tbody id="mainTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="pagination-bar" id="mainTablePagination"></div>
-        </div>
-
-        <!-- 5. TABEL KEDUA KHUSUS TAB HOLDING (RINCIAN 5 TOKO E-COMMERCE) -->
-        <div class="card table-card" id="secondaryHoldingCard">
-          <div class="card-header-flex">
-            <div>
-              <h2 class="card-title">Konsolidasi Performa 5 Toko E-Commerce (Shopee & TikTok)</h2>
-              <p class="card-subtitle">Data dihitung dari kolom berwarna biru (Qty, Harga Awal/Subtotal, dan Diskon Penjual)</p>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="krafts-table">
-              <thead id="secondaryTableHead"></thead>
-              <tbody id="secondaryTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- KOLOM KANAN (DONUT CHART & RINGKASAN EKSEKUTIF) -->
-      <div class="grid-right-col">
-
-        <!-- 1. DONUT CHART INTERAKTIF DENGAN PILL MELAYANG -->
-        <div class="card donut-card">
-          <div class="card-header-flex">
-            <h2 class="card-title" id="donutChartTitle">Proporsi Kontribusi</h2>
-            <span class="kpi-period-pill" id="donutBadgePill">Live Share</span>
-          </div>
-
-          <div class="donut-canvas-container">
-            <canvas id="distributionDonutChart"></canvas>
-            <div class="donut-floating-pill" id="donutFloatingPill">87,1%</div>
-          </div>
-
-          <div class="donut-legend-grid" id="donutLegendList"></div>
-
-          <div class="donut-bottom-summary">
-            <div class="mini-bars-icon">
-              <span class="mbar b1"></span>
-              <span class="mbar b2"></span>
-              <span class="mbar b3"></span>
-              <span class="mbar b4"></span>
-            </div>
-            <div class="donut-stat-col">
-              <strong id="donutSharePercent">87,06%</strong>
-              <span id="donutShareLabel">% Achieve Periode</span>
-            </div>
-            <div class="donut-stat-col right">
-              <strong id="donutTotalNominal">Rp2,41 M</strong>
-              <span id="donutTotalLabel">Realisasi Periode</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. PANEL KANAN: KONTROL FIREBASE & SOROTAN UNIT -->
-        <div class="card side-summary-card">
-          <h2 class="card-title">Kontrol Data & Ringkasan Unit</h2>
-
-          <div class="quick-action-tiles">
-            <button class="action-tile" id="btnPushFirebase">
-              <div class="tile-icon blue-tile">☁️</div>
-              <span>Push ke Firebase</span>
-            </button>
-            <button class="action-tile" id="btnExportCsv">
-              <div class="tile-icon pink-tile">📥</div>
-              <span>Export CSV Periode</span>
-            </button>
-          </div>
-
-          <div id="rightSideDynamicBoxes"></div>
-        </div>
-
-      </div>
-
     </section>
 
-  </main>
+    <!-- KONTEN UTAMA -->
+    <main class="main-container">
 
-  <!-- ================= MODAL POP-UP 1: REVIEW REPORT ================= -->
-  <div class="modal-backdrop hidden" id="reviewModalBackdrop">
-    <div class="krafts-modal">
-      <button class="modal-close-x" id="btnCloseReviewModal">✕</button>
-      <h3 class="modal-title">Review Report — Pakkawaru Group</h3>
+      <!-- BARIS JUDUL & SUB-FILTER KANAL -->
+      <div class="section-top-bar">
+        <div>
+          <span class="section-tag" id="viewBadgeTag">KONSOLIDASI PAKKAWARU GROUP</span>
+          <h1 class="section-heading" id="viewTitleHeading">Ringkasan Eksekutif & Performa Wilayah</h1>
+          <p class="section-desc" id="viewSubtitleDesc">Monitoring Target Bulanan, Target Harian, Omset Tercapai & Estimasi Akhir Bulan</p>
+        </div>
 
-      <div class="modal-user-row">
-        <div class="modal-user-left">
-          <div class="avatar-circle lg" id="modalEntityAvatar">PG</div>
-          <div>
-            <h4 id="modalEntityName">Nama Entitas</h4>
-            <p id="modalEntitySub">Sub-kategori</p>
-            <small id="modalEntityDate">Evaluasi Target Per Tanggal</small>
+        <div class="sub-channel-pills hidden" id="channelSubPills"></div>
+      </div>
+
+      <!-- 6 KARTU INDIKATOR UTAMA -->
+      <section class="kpi-six-grid" id="primaryKpiGrid"></section>
+
+      <!-- PANEL KONVERSI RINGGIT KE RUPIAH (KHUSUS SHOPEE MALAYSIA) -->
+      <section id="malaysiaFxBanner" class="fx-conversion-panel hidden"></section>
+
+      <!-- KOMPARASI WILAYAH BANDUNG VS GORONTALO -->
+      <section id="regionalCompareSection" class="regional-grid"></section>
+
+      <!-- GRID GRAFIK INTERAKTIF (BAR CHART & DONUT CHART) -->
+      <section class="charts-two-col">
+        <div class="panel-card">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title" id="barChartHeading">Perbandingan Target, Omset Tercapai & Estimasi Akhir Bulan</h2>
+              <p class="panel-subtitle" id="barChartSub">Visualisasi interaktif berdasarkan filter periode aktif</p>
+            </div>
+            <select id="chartViewMode" class="select-control-sm">
+              <option value="target_vs_real">Target vs Omset Tercapai</option>
+              <option value="real_vs_estimasi">Omset Tercapai vs Estimasi Akhir Bulan</option>
+              <option value="monthly_trend">Tren Pencapaian Bulanan (Jan - Nov 2026)</option>
+            </select>
+          </div>
+          <div class="chart-box-lg">
+            <canvas id="mainBarCanvas"></canvas>
           </div>
         </div>
-        <span class="status-pill pill-approved" id="modalEntityStatus">Verified</span>
-      </div>
 
-      <div class="modal-metrics-box" id="modalMetricsDetail"></div>
+        <div class="panel-card">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title" id="donutChartHeading">Proporsi Omset & Rasio Pesanan</h2>
+              <p class="panel-subtitle" id="donutChartSub">Distribusi kontribusi unit dan persentase keberhasilan</p>
+            </div>
+          </div>
+          <div class="chart-box-donut">
+            <canvas id="mainDonutCanvas"></canvas>
+            <div class="donut-center-info">
+              <strong id="donutCenterBig">0%</strong>
+              <span id="donutCenterSmall">Capaian</span>
+            </div>
+          </div>
+          <div id="donutCustomLegend" class="donut-legend-list"></div>
+        </div>
+      </section>
 
-      <p class="modal-section-label">Tandai Status Audit (Klik label untuk memilih):</p>
-      <div class="modal-tag-pills" id="modalSelectableTags">
-        <button type="button" class="tag-pill active">Target Periode Terverifikasi</button>
-        <button type="button" class="tag-pill">Omset Emas Dibagi 3 (Valid)</button>
-        <button type="button" class="tag-pill">Kolom Biru Sesuai</button>
-        <button type="button" class="tag-pill">Perlu Genjot Harian</button>
-      </div>
-
-      <div class="modal-footer-btns">
-        <button class="btn-modal-cancel" id="btnCancelReview">Cancel</button>
-        <button class="btn-modal-submit" id="btnSubmitReview">Review Done</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL POP-UP 2: TAKE A ACTION ================= -->
-  <div class="modal-backdrop hidden" id="actionModalBackdrop">
-    <div class="krafts-modal">
-      <button class="modal-close-x" id="btnCloseActionModal">✕</button>
-      <h3 class="modal-title">Take a Action</h3>
-
-      <div class="modal-user-row">
-        <div class="modal-user-left">
-          <div class="avatar-circle lg coral-bg">ACT</div>
+      <!-- TABEL RINGKASAN EKSEKUTIF (RINGAN TANPA BARIS DETAIL MENTAH) -->
+      <section class="panel-card table-panel">
+        <div class="panel-head">
           <div>
-            <h4 id="actionEntityName">Instruksi Eksekutif</h4>
-            <p id="actionEntitySub">Pakkawaru Group Control</p>
+            <h2 class="panel-title" id="summaryTableHeading">Matriks Capaian Entitas & Kanal</h2>
+            <p class="panel-subtitle" id="summaryTableSub">Ringkasan metrik teragregasi untuk performa cepat di semua perangkat</p>
           </div>
         </div>
-      </div>
+        <div class="table-scroll">
+          <table class="clean-table">
+            <thead id="summaryTableHead"></thead>
+            <tbody id="summaryTableBody"></tbody>
+          </table>
+        </div>
+      </section>
 
-      <div class="modal-checkbox-list">
-        <label class="custom-check-row">
-          <input type="checkbox" checked />
-          <span>Tandai capaian tanggal ini sudah dievaluasi Manajemen</span>
-        </label>
-        <label class="custom-check-row">
-          <input type="checkbox" />
-          <span>Simpan hasil evaluasi rentang tanggal ke Firebase</span>
-        </label>
-        <label class="custom-check-row">
-          <input type="checkbox" />
-          <span>Kirim pengingat target harian ke koordinator unit</span>
-        </label>
-      </div>
+    </main>
 
-      <div class="modal-footer-btns">
-        <button class="btn-modal-cancel" id="btnCancelAction">Cancel</button>
-        <button class="btn-modal-submit" id="btnSubmitAction">Take Action</button>
-      </div>
-    </div>
   </div>
 
-  <!-- ================= MODAL POP-UP 3: KONFIGURASI SPREADSHEET & FIREBASE ================= -->
-  <div class="modal-backdrop hidden" id="configModalBackdrop">
-    <div class="krafts-modal">
-      <button class="modal-close-x" id="btnCloseConfigModal">✕</button>
-      <h3 class="modal-title">Koneksi Data Pakkawaru Group</h3>
-      <p class="card-subtitle" style="margin-bottom:14px;">
-        ID Spreadsheet 11 Sheet Anda sudah terhubung. Isi URL Firebase Realtime Database Anda untuk menyimpan sinkronisasi.
-      </p>
-
-      <div class="form-group">
-        <label>Google Spreadsheet ID</label>
-        <input type="text" id="inputSheetId" class="clean-input-full" value="1CuPBkl1nq2tUuy2tTtRRLZWrptXRZGuDbFylCDFDZNk" />
+  <!-- MODAL PENGATURAN SPREADSHEET, KURS MYR & FIREBASE -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Pengaturan Integrasi & Kurs</h3>
+        <button id="btnCloseSettings" class="btn-close-icon">✕</button>
       </div>
-
-      <div class="form-group">
-        <label>Firebase Realtime Database URL</label>
-        <input type="text" id="inputFirebaseUrl" class="clean-input-full" placeholder="https://pakkawaru-group-default-rtdb.asia-southeast1.firebasedatabase.app" />
+      <div class="modal-body">
+        <div class="form-row">
+          <label for="cfgSheetId">Google Spreadsheet ID</label>
+          <input type="text" id="cfgSheetId" value="1CuPBkl1nq2tUuy2tTtRRLZWrptXRZGuDbFylCDFDZNk" />
+        </div>
+        <div class="form-row">
+          <label for="cfgMyrRate">Kurs Realtime 1 Ringgit (MYR) ke Rupiah (IDR)</label>
+          <input type="number" id="cfgMyrRate" value="3580" step="10" />
+        </div>
+        <div class="form-row">
+          <label for="cfgFirebaseUrl">Firebase Realtime Database URL (Opsional)</label>
+          <input type="text" id="cfgFirebaseUrl" placeholder="https://project-id-default-rtdb.asia-southeast1.firebasedatabase.app" />
+        </div>
       </div>
-
-      <div class="modal-footer-btns">
-        <button class="btn-modal-cancel" id="btnCancelConfig">Batal</button>
-        <button class="btn-modal-submit" id="btnSaveConfig">Simpan & Sinkronkan</button>
+      <div class="modal-foot">
+        <button id="btnSaveSettings" class="btn-primary-full">Simpan Pengaturan</button>
       </div>
     </div>
   </div>
