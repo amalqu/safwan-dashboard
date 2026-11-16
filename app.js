@@ -1,7 +1,9 @@
 /**
  * ============================================================================
  * PAKKAWARU GROUP — EXECUTIVE FINANCIAL INTELLIGENCE ENGINE (app.js)
- * Mendukung 15 Sheet, Login + PIN, Kurs MYR-IDR Realtime, & Filter Tanggal
+ * - Rekonsiliasi 100% Klop (Shopee/TikTok Batal Kolom B, Meta RTS/Return + Koma Dijumlah)
+ * - Fitur Target Custom Tanggal & Persentase Progres dari Rentang Tanggal
+ * - Login Berlapis: Username (pakkawaru) + Password (bismillahpakkawaru) + PIN (739482)
  * ============================================================================
  */
 
@@ -9,7 +11,7 @@ const AUTH_CONFIG = {
   username: 'pakkawaru',
   password: 'bismillahpakkawaru',
   pin: '739482',
-  sessionKey: 'pakkawaru_exec_auth_v3'
+  sessionKey: 'pakkawaru_exec_auth_v4'
 };
 
 const DEFAULT_SHEET_ID = '1CuPBkl1nq2tUuy2tTtRRLZWrptXRZGuDbFylCDFDZNk';
@@ -20,17 +22,17 @@ const STATE = {
   firebaseUrl: localStorage.getItem('pg_firebase_url') || '',
   activeTab: 'holding',       // holding | safwan | ansan | amalqu | latihhobi | sjp | ppm
   subChannel: 'all',
-  selectedMonth: '2026-11',   // 2026-01 s/d 2026-11 atau 2026-ALL
-  rangePreset: 'this_month',  // this_month | last_7 | last_30 | custom
+  selectedMonth: '2026-11',
+  rangePreset: 'this_month',
   startDate: '2026-11-01',
   endDate: '2026-11-13',
-  chartMode: 'target_vs_real',
+  chartMode: 'custom_target',
   barChart: null,
   donutChart: null
 };
 
 /**
- * 1. DATA MASTER TARGET BULANAN & HARIAN (NOVEMBER 2026)
+ * 1. DATA MASTER ENTITAS PAKKAWARU GROUP
  */
 const ENTITY_META = {
   safwan: { key: 'safwan', name: 'PT Safwan Berkah Indonesia', short: 'PT Safwan', region: 'Bandung', targetBulanan: 2918467000, targetHarian: 97282233, isGold: false, hasQty: true },
@@ -42,8 +44,7 @@ const ENTITY_META = {
 };
 
 /**
- * 2. DATA HISTORIS LINTAS BULAN (DARI SHEET: PENCAPAIAN BULANAN 2026)
- * Catatan: Untuk SJP & PPM, rawOmset adalah angka penjualan 100% yang akan dibagi 3 oleh mesin.
+ * 2. DATA HISTORIS BULANAN (JANUARI - OKTOBER 2026)
  */
 const MONTHLY_HISTORY_2026 = {
   '2026-01': { label: 'Januari 2026', safwan: [2662260000, 3350010000], ansan: [659921000, 513649000], amalqu: [326000000, 313838000], latihhobi: [2802000, 71338000], sjp: [0, 0], ppm: [0, 0] },
@@ -59,41 +60,43 @@ const MONTHLY_HISTORY_2026 = {
 };
 
 /**
- * 3. REKAP HARIAN REALTIME NOVEMBER 2026 DARI 15 SHEET
- * Format tiap tanggal: [validQty, validOmset, cancelQty, cancelOmset]
- * Khusus shopeeMalaysia dalam satuan Ringgit (MYR): [validQty, validOmsetMYR, cancelQty, cancelOmsetMYR]
+ * 3. DATA HARIAN NOVEMBER 2026 HASIL REKONSILIASI 100% KLOP
+ * Format: [validQty, validOmset, cancelQty, cancelOmset]
  */
 const REALTIME_NOV_DAILY = {
-  shopeeSafwan: {
-    '2026-11-01': [105, 16502400, 20, 3196600],
-    '2026-11-02': [93, 14689200, 15, 2411500],
-    '2026-11-03': [118, 18745100, 22, 3489000],
-    '2026-11-04': [115, 18210300, 21, 3325400],
-    '2026-11-05': [110, 17490800, 19, 3012000],
-    '2026-11-06': [114, 18105400, 21, 3340000],
-    '2026-11-07': [117, 18592000, 20, 3178000],
-    '2026-11-08': [130, 20654000, 22, 3495000],
-    '2026-11-09': [112, 17804200, 20, 3180000],
-    '2026-11-10': [89, 14145100, 16, 2543000],
-    '2026-11-11': [400, 63854000, 47, 7445033]
-  },
   tiktokSafwan: {
-    '2026-11-01': [362, 56840100, 70, 12236000],
-    '2026-11-02': [405, 63612000, 78, 13638000],
-    '2026-11-03': [425, 66754000, 82, 14335000],
-    '2026-11-04': [346, 54341000, 68, 11887000],
-    '2026-11-05': [314, 49316000, 61, 10663000],
-    '2026-11-06': [370, 58110000, 72, 12586000],
-    '2026-11-07': [232, 36436000, 45, 7866000],
-    '2026-11-08': [381, 59837000, 74, 12935000],
-    '2026-11-09': [405, 63608000, 79, 13810000],
-    '2026-11-10': [333, 52300000, 66, 11537000],
-    '2026-11-11': [382, 59987867, 75, 13107762]
+    // Total: 3.965 Pcs | Omset: Rp622.687.341 | Cancel: 766 Pcs (Rp134.038.873)
+    '2026-11-01': [348, 58756733, 63, 10551187],
+    '2026-11-02': [374, 63332916, 91, 14219368],
+    '2026-11-03': [388, 63420659, 113, 22007356],
+    '2026-11-04': [329, 53535521, 71, 11343165],
+    '2026-11-05': [309, 47874240, 75, 11627299],
+    '2026-11-06': [375, 52359793, 65, 9984554],
+    '2026-11-07': [249, 36835101, 25, 3717323],
+    '2026-11-08': [407, 63631314, 69, 15244374],
+    '2026-11-09': [426, 65911306, 57, 8706935],
+    '2026-11-10': [350, 55076249, 92, 19722086],
+    '2026-11-11': [410, 61953509, 45, 6915226]
+  },
+  shopeeSafwan: {
+    // Total: 1.507 Pcs | Omset: Rp239.414.500 | Cancel: 239 Pcs (Rp37.993.533)
+    '2026-11-01': [103, 17387599, 20, 3322100],
+    '2026-11-02': [93, 15282294, 16, 2527599],
+    '2026-11-03': [109, 17686868, 24, 3939365],
+    '2026-11-04': [118, 18929895, 16, 2411499],
+    '2026-11-05': [113, 18168704, 12, 1928532],
+    '2026-11-06': [120, 19249940, 11, 1772790],
+    '2026-11-07': [114, 18595346, 18, 2808702],
+    '2026-11-08': [125, 20047004, 24, 4168773],
+    '2026-11-09': [115, 17779353, 13, 2300192],
+    '2026-11-10': [88, 14436688, 16, 2504241],
+    '2026-11-11': [409, 61850809, 69, 10309740]
   },
   shopeeMalaysia: {
-    '2026-11-01': [5, 468.55, 0, 0],
-    '2026-11-02': [1, 118.00, 0, 0],
-    '2026-11-03': [3, 297.26, 0, 0],
+    // Total: 31 Pcs | Omset: RM 2.952,55 | Cancel: 13 Pcs (RM 1.308,16)
+    '2026-11-01': [5, 468.55, 0, 0.0],
+    '2026-11-02': [1, 118.0, 0, 0.0],
+    '2026-11-03': [3, 297.26, 0, 0.0],
     '2026-11-04': [3, 229.07, 1, 84.19],
     '2026-11-05': [2, 168.41, 1, 60.48],
     '2026-11-06': [3, 279.51, 1, 107.93],
@@ -103,63 +106,66 @@ const REALTIME_NOV_DAILY = {
     '2026-11-10': [3, 310.12, 4, 431.72],
     '2026-11-11': [2, 192.12, 1, 107.93]
   },
+  tiktokAnsan: {
+    // Total: 2.825 Pcs | Omset: Rp387.564.316 | Cancel: 488 Pcs (Rp68.761.818)
+    '2026-11-01': [225, 32074700, 43, 6888299],
+    '2026-11-02': [306, 40852552, 59, 7764651],
+    '2026-11-03': [337, 45012165, 69, 9617314],
+    '2026-11-04': [296, 41638357, 85, 11499395],
+    '2026-11-05': [276, 39912646, 41, 5666581],
+    '2026-11-06': [302, 40244202, 57, 7514228],
+    '2026-11-07': [145, 21733324, 18, 2794752],
+    '2026-11-08': [283, 38125530, 22, 3162940],
+    '2026-11-09': [251, 32194068, 27, 3557483],
+    '2026-11-10': [204, 26756500, 41, 6279895],
+    '2026-11-11': [200, 29020272, 26, 4016280]
+  },
   shopeeAnsan: {
-    '2026-11-01': [89, 12805000, 11, 1640000],
-    '2026-11-02': [109, 15683000, 14, 2087000],
-    '2026-11-03': [108, 15539000, 13, 1938000],
-    '2026-11-04': [95, 13669000, 12, 1789000],
-    '2026-11-05': [79, 11367000, 10, 1491000],
-    '2026-11-06': [75, 10791000, 9, 1342000],
-    '2026-11-07': [75, 10791000, 9, 1342000],
-    '2026-11-08': [72, 10360000, 9, 1342000],
-    '2026-11-09': [107, 15395000, 13, 1938000],
-    '2026-11-10': [89, 12805000, 11, 1640000],
-    '2026-11-11': [173, 24893749, 23, 3429621]
+    // Total: 1.071 Pcs | Omset: Rp154.098.749 | Cancel: 134 Pcs (Rp19.978.621)
+    '2026-11-01': [82, 11586445, 13, 1992339],
+    '2026-11-02': [112, 16377095, 12, 1743753],
+    '2026-11-03': [103, 14784106, 17, 2738068],
+    '2026-11-04': [94, 13808246, 13, 1901748],
+    '2026-11-05': [75, 10487289, 14, 1792373],
+    '2026-11-06': [85, 11973242, 4, 562952],
+    '2026-11-07': [81, 11955282, 4, 654244],
+    '2026-11-08': [67, 9262761, 12, 1600670],
+    '2026-11-09': [109, 15590865, 13, 1977415],
+    '2026-11-10': [88, 12858793, 14, 2280388],
+    '2026-11-11': [175, 25414625, 18, 2734671]
   },
   shopeeBasyirah: {
-    '2026-11-01': [34, 4441000, 10, 1667000],
-    '2026-11-02': [35, 4572000, 10, 1667000],
-    '2026-11-03': [26, 3396000, 7, 1167000],
-    '2026-11-04': [36, 4702000, 10, 1667000],
-    '2026-11-05': [35, 4572000, 10, 1667000],
-    '2026-11-06': [27, 3527000, 8, 1333000],
-    '2026-11-07': [19, 2482000, 6, 1000000],
-    '2026-11-08': [23, 3004000, 6, 1000000],
-    '2026-11-09': [30, 3918000, 9, 1500000],
-    '2026-11-10': [42, 5486000, 12, 2000000],
-    '2026-11-11': [45, 5879092, 13, 2168037]
-  },
-  tiktokAnsan: {
-    '2026-11-01': [226, 31006000, 39, 5493000],
-    '2026-11-02': [324, 44451000, 56, 7887000],
-    '2026-11-03': [335, 45960000, 58, 8169000],
-    '2026-11-04': [333, 45686000, 58, 8169000],
-    '2026-11-05': [284, 38964000, 49, 6901000],
-    '2026-11-06': [309, 42393000, 54, 7606000],
-    '2026-11-07': [142, 19482000, 25, 3521000],
-    '2026-11-08': [212, 29086000, 37, 5211000],
-    '2026-11-09': [242, 33201000, 42, 5915000],
-    '2026-11-10': [210, 28811000, 37, 5211000],
-    '2026-11-11': [205, 28127333, 36, 5075801]
-  },
-  metaLp: {
-    // Murni dari kolom Harga Jual (Kolom N) pada sheet Meta Pakkawaru (META LP)
-    '2026-11-02': [289, 31580000, 7, 766500],
-    '2026-11-03': [208, 22728000, 5, 547500],
-    '2026-11-04': [209, 22837000, 5, 547500],
-    '2026-11-05': [186, 20323000, 4, 438000],
-    '2026-11-06': [163, 17810000, 4, 438000],
-    '2026-11-07': [80, 8741000, 2, 219000],
-    '2026-11-09': [196, 21416000, 4, 438000],
-    '2026-11-10': [269, 29394000, 6, 657000],
-    '2026-11-11': [146, 15945000, 3, 328500]
+    // Total: 352 Pcs | Omset: Rp45.979.092 | Cancel: 101 Pcs (Rp16.836.037)
+    '2026-11-01': [31, 4510551, 5, 843923],
+    '2026-11-02': [79, 5391423, 1, 190395],
+    '2026-11-03': [19, 2911135, 6, 816854],
+    '2026-11-04': [27, 3700061, 10, 1501563],
+    '2026-11-05': [29, 3694719, 22, 3871326],
+    '2026-11-06': [24, 3720806, 2, 292345],
+    '2026-11-07': [14, 1981570, 5, 746322],
+    '2026-11-08': [21, 3350630, 21, 3820030],
+    '2026-11-09': [27, 4248398, 4, 684516],
+    '2026-11-10': [38, 5999465, 17, 2757957],
+    '2026-11-11': [43, 6470334, 8, 1310806]
   },
   metaBqy: {
-    // Murni dari kolom Harga Jual (Kolom N) pada sheet Meta BQY
+    // Total: 14 Pcs | Omset: Rp1.386.000 | Cancel: 0 Pcs (Rp0)
     '2026-11-02': [2, 198000, 0, 0],
     '2026-11-03': [3, 297000, 0, 0],
     '2026-11-05': [5, 495000, 0, 0],
     '2026-11-10': [4, 396000, 0, 0]
+  },
+  metaLp: {
+    // Total: 1.762 Pcs | Omset: Rp192.428.000 (Sudah termasuk +Rp4.351.000 dari 17 sel berkoma) | Cancel (RTS/Return): 24 Pcs (Rp2.726.000)
+    '2026-11-02': [283, 31027000, 12, 1398000],
+    '2026-11-03': [208, 22902000, 7, 763000],
+    '2026-11-04': [210, 22610000, 2, 198000],
+    '2026-11-05': [188, 20712000, 2, 198000],
+    '2026-11-06': [166, 18044000, 1, 169000],
+    '2026-11-07': [80, 8760000, 0, 0],
+    '2026-11-09': [205, 22045000, 0, 0],
+    '2026-11-10': [275, 29885000, 0, 0],
+    '2026-11-11': [147, 16443000, 0, 0]
   },
   amalqu: {
     '2026-11-01': [1, 16995713, 0, 0],
@@ -184,8 +190,8 @@ const REALTIME_NOV_DAILY = {
     '2026-11-06': [1, 21863730, 0, 0],
     '2026-11-09': [1, 36204825, 0, 0]
   },
-  // SJP & PPM menyimpan Penjualan Riil 100% di indeks ke-1, yang otomatis dibagi 3 oleh mesin
   sjp: {
+    // Penjualan Riil SJP (Akan dibagi 3 otomatis oleh mesin)
     '2026-11-01': [1, 194898000, 0, 0],
     '2026-11-03': [1, 202090000, 0, 0],
     '2026-11-06': [1, 287870000, 0, 0],
@@ -193,6 +199,7 @@ const REALTIME_NOV_DAILY = {
     '2026-11-10': [2, 640211000, 0, 0]
   },
   ppm: {
+    // Penjualan Riil PPM (Akan dibagi 3 otomatis oleh mesin)
     '2026-11-02': [1, 303365000, 0, 0],
     '2026-11-03': [1, 440336400, 0, 0],
     '2026-11-05': [1, 277189000, 0, 0],
@@ -205,7 +212,7 @@ const REALTIME_NOV_DAILY = {
 
 /**
  * ============================================================================
- * FORMATTER & HELPER KALKULASI
+ * FORMATTER & HELPER TANGGAL
  * ============================================================================
  */
 function formatIDR(val) {
@@ -236,6 +243,14 @@ function getActiveDaysCount() {
   return Math.max(1, Math.round((e - s) / 86400000) + 1);
 }
 
+function formatReadableRange() {
+  if (STATE.selectedMonth === '2026-ALL') return 'Akumulasi Tahun 2026';
+  if (STATE.selectedMonth !== '2026-11') return MONTHLY_HISTORY_2026[STATE.selectedMonth].label;
+  const sDay = Number(STATE.startDate.slice(8, 10));
+  const eDay = Number(STATE.endDate.slice(8, 10));
+  return `${sDay} Nov s/d ${eDay} Nov 2026 (${getActiveDaysCount()} Hari)`;
+}
+
 function isDateInFilter(dt) {
   return dt >= STATE.startDate && dt <= STATE.endDate;
 }
@@ -261,13 +276,12 @@ function sumSeries(seriesObj, isMyr = false) {
 }
 
 /**
- * Menghitung Seluruh Metrik Wajib per Entitas (Mendukung Bulan Historis & Realtime Nov 2026)
+ * Menghitung Metrik Lengkap per Entitas
  */
 function computeEntityReport(entityKey) {
   const meta = ENTITY_META[entityKey];
   const days = getActiveDaysCount();
 
-  // A. Mode Bulan Historis (Jan - Okt 2026) atau Akumulasi 2026
   if (STATE.selectedMonth !== '2026-11') {
     let targetBulanan = 0, rawOmset = 0;
     if (STATE.selectedMonth === '2026-ALL') {
@@ -275,8 +289,7 @@ function computeEntityReport(entityKey) {
         targetBulanan += m[entityKey][0];
         rawOmset += m[entityKey][1];
       });
-      // Tambahkan November realtime
-      const novRep = computeRealtimeNovemberEntity(entityKey);
+      const novRep = computeRealtimeNovemberEntity(entityKey, 13);
       targetBulanan += meta.targetBulanan;
       rawOmset += meta.isGold ? novRep.rawBeforeDiv3 : novRep.validOmset;
     } else {
@@ -287,15 +300,15 @@ function computeEntityReport(entityKey) {
 
     const omsetTercapai = meta.isGold ? Math.round(rawOmset / 3) : rawOmset;
     const targetHarian = Math.round(targetBulanan / 30);
-    const targetPeriode = targetBulanan;
+    const targetCustomTanggal = targetBulanan;
     const estimasiBulan = omsetTercapai;
-    const persenCapaian = targetBulanan > 0 ? Number(((omsetTercapai / targetBulanan) * 100).toFixed(2)) : 0;
+    const persenBulanan = targetBulanan > 0 ? Number(((omsetTercapai / targetBulanan) * 100).toFixed(2)) : 0;
 
     return {
       ...meta,
       targetBulanan,
       targetHarian,
-      targetPeriode,
+      targetCustomTanggal,
       validOmset: omsetTercapai,
       rawBeforeDiv3: rawOmset,
       validQty: 0,
@@ -303,14 +316,13 @@ function computeEntityReport(entityKey) {
       cancelOmset: 0,
       cancelRatePct: 0,
       estimasiBulan,
-      estimasiPct: persenCapaian,
-      persenCapaian,
-      persenPeriode: persenCapaian,
+      estimasiPct: persenBulanan,
+      persenBulanan,
+      persenCustomTanggal: persenBulanan,
       channels: []
     };
   }
 
-  // B. Mode Realtime November 2026
   return computeRealtimeNovemberEntity(entityKey, days);
 }
 
@@ -318,20 +330,20 @@ function computeRealtimeNovemberEntity(entityKey, days = 13) {
   const meta = ENTITY_META[entityKey];
   const targetBulanan = meta.targetBulanan;
   const targetHarian = meta.targetHarian;
-  const targetPeriode = Math.round(targetHarian * days);
+  const targetCustomTanggal = Math.round(targetHarian * days);
 
   let validQty = 0, validOmset = 0, cancelQty = 0, cancelOmset = 0, rawBeforeDiv3 = 0;
   let channels = [];
 
   if (entityKey === 'safwan') {
-    const shId = sumSeries(REALTIME_NOV_DAILY.shopeeSafwan, false);
     const ttId = sumSeries(REALTIME_NOV_DAILY.tiktokSafwan, false);
+    const shId = sumSeries(REALTIME_NOV_DAILY.shopeeSafwan, false);
     const shMy = sumSeries(REALTIME_NOV_DAILY.shopeeMalaysia, true);
 
     channels = [
-      { id: 'tiktokSafwan', name: 'TikTok Safwan', ...ttId },
-      { id: 'shopeeSafwan', name: 'Shopee Safwan (ID)', ...shId },
-      { id: 'shopeeMalaysia', name: 'Shopee Malaysia (MYR→IDR)', ...shMy, isMyr: true }
+      { id: 'tiktokSafwan', name: 'Tiktok Safwan', ...ttId },
+      { id: 'shopeeSafwan', name: 'Shopee Safwan', ...shId },
+      { id: 'shopeeMalaysia', name: 'Shopee Malaysia Safwan', ...shMy, isMyr: true }
     ];
 
     const filteredCh = STATE.activeTab === 'safwan' && STATE.subChannel !== 'all'
@@ -346,17 +358,17 @@ function computeRealtimeNovemberEntity(entityKey, days = 13) {
     });
   } else if (entityKey === 'ansan') {
     const ttAn = sumSeries(REALTIME_NOV_DAILY.tiktokAnsan, false);
+    const mtLp = sumSeries(REALTIME_NOV_DAILY.metaLp, false);
     const shAn = sumSeries(REALTIME_NOV_DAILY.shopeeAnsan, false);
     const shBs = sumSeries(REALTIME_NOV_DAILY.shopeeBasyirah, false);
-    const mtLp = sumSeries(REALTIME_NOV_DAILY.metaLp, false);
     const mtBq = sumSeries(REALTIME_NOV_DAILY.metaBqy, false);
 
     channels = [
-      { id: 'tiktokAnsan', name: 'TikTok Ansan', ...ttAn },
-      { id: 'metaLp', name: 'Meta LP (Harga Jual)', ...mtLp },
+      { id: 'tiktokAnsan', name: 'Tiktok Ansan', ...ttAn },
+      { id: 'metaLp', name: 'Meta Pakkawaru Ansan (LP)', ...mtLp },
       { id: 'shopeeAnsan', name: 'Shopee Ansan', ...shAn },
-      { id: 'shopeeBasyirah', name: 'Shopee Basyirah', ...shBs },
-      { id: 'metaBqy', name: 'Meta BQY (Harga Jual)', ...mtBq }
+      { id: 'shopeeBasyirah', name: 'Shopee Basyirah Ansan', ...shBs },
+      { id: 'metaBqy', name: 'Meta BQY Ansan', ...mtBq }
     ];
 
     const filteredCh = STATE.activeTab === 'ansan' && STATE.subChannel !== 'all'
@@ -380,7 +392,6 @@ function computeRealtimeNovemberEntity(entityKey, days = 13) {
   } else if (entityKey === 'sjp' || entityKey === 'ppm') {
     const g = sumSeries(REALTIME_NOV_DAILY[entityKey], false);
     rawBeforeDiv3 = g.validOmset;
-    // Instruksi Wajib: Omset SJP & PPM dibagi 3
     validOmset = Math.round(rawBeforeDiv3 / 3);
     validQty = g.validQty;
   }
@@ -388,18 +399,17 @@ function computeRealtimeNovemberEntity(entityKey, days = 13) {
   const totalGrossSales = validOmset + cancelOmset;
   const cancelRatePct = totalGrossSales > 0 ? Number(((cancelOmset / totalGrossSales) * 100).toFixed(2)) : 0;
 
-  // Estimasi Akhir Bulan dilihat dari tren harian pada periode terpilih (Proyeksi 30 Hari)
-  const dailyTrend = days > 0 ? validOmset / days : 0;
-  const estimasiBulan = Math.round(dailyTrend * 30);
+  const dailyAverage = days > 0 ? validOmset / days : 0;
+  const estimasiBulan = Math.round(dailyAverage * 30);
   const estimasiPct = targetBulanan > 0 ? Number(((estimasiBulan / targetBulanan) * 100).toFixed(2)) : 0;
-  const persenCapaian = targetBulanan > 0 ? Number(((validOmset / targetBulanan) * 100).toFixed(2)) : 0;
-  const persenPeriode = targetPeriode > 0 ? Number(((validOmset / targetPeriode) * 100).toFixed(2)) : 0;
+  const persenBulanan = targetBulanan > 0 ? Number(((validOmset / targetBulanan) * 100).toFixed(2)) : 0;
+  const persenCustomTanggal = targetCustomTanggal > 0 ? Number(((validOmset / targetCustomTanggal) * 100).toFixed(2)) : 0;
 
   return {
     ...meta,
     targetBulanan,
     targetHarian,
-    targetPeriode,
+    targetCustomTanggal,
     validOmset,
     rawBeforeDiv3,
     validQty,
@@ -408,10 +418,71 @@ function computeRealtimeNovemberEntity(entityKey, days = 13) {
     cancelRatePct,
     estimasiBulan,
     estimasiPct,
-    persenCapaian,
-    persenPeriode,
+    persenBulanan,
+    persenCustomTanggal,
     channels
   };
+}
+
+/**
+ * ============================================================================
+ * RENDERER BANNER "PROGRES TARGET CUSTOM TANGGAL" (MUDAH DIPAHAMI)
+ * ============================================================================
+ */
+function renderCustomTargetBanner(titleContext, targetCustom, omsetActual, targetHarian, days) {
+  const pct = targetCustom > 0 ? Number(((omsetActual / targetCustom) * 100).toFixed(2)) : 0;
+  const selisih = omsetActual - targetCustom;
+  const isAchieved = selisih >= 0;
+  const barWidth = Math.max(3, Math.min(100, pct));
+  const barColor = isAchieved ? '#10B981' : '#2563EB';
+
+  document.getElementById('customDateTargetPanel').innerHTML = `
+    <div class="ct-header">
+      <div class="ct-title-box">
+        <h3>Target & Progres Custom Tanggal: ${formatReadableRange()}</h3>
+        <p>Mengukur apakah omset <strong>${titleContext}</strong> sudah mencapai target pada rentang <strong>${days} hari</strong> yang dipilih</p>
+      </div>
+      <span class="ct-status-pill ${isAchieved ? 'badge-success' : 'badge-warning'}">
+        ${isAchieved ? 'TARGET TANGGAL INI TERCAPAI' : 'BELUM MENCAPAI TARGET TANGGAL INI'}
+      </span>
+    </div>
+
+    <div class="ct-metrics-grid">
+      <div class="ct-metric-box">
+        <small>1. Target Custom Tanggal (${days} Hari)</small>
+        <strong style="color:#4F46E5;">${formatIDR(targetCustom)}</strong>
+        <span>Rumus: ${formatIDR(targetHarian)} × ${days} hari</span>
+      </div>
+
+      <div class="ct-metric-box">
+        <small>2. Omset Tercapai di Tanggal Ini</small>
+        <strong style="color:#047857;">${formatIDR(omsetActual)}</strong>
+        <span>Rata-rata: ${formatIDR(omsetActual / days)} / hari</span>
+      </div>
+
+      <div class="ct-metric-box">
+        <small>3. Persentase Progres Tanggal Ini</small>
+        <strong style="color:${isAchieved ? '#047857' : '#2563EB'};">${pct}%</strong>
+        <span>Dari target ${days} hari yang ditentukan</span>
+      </div>
+
+      <div class="ct-metric-box">
+        <small>4. Selisih / Kekurangan Target</small>
+        <strong style="color:${isAchieved ? '#047857' : '#BE123C'};">${isAchieved ? '+' + formatIDR(selisih) : formatIDR(selisih)}</strong>
+        <span>${isAchieved ? 'Surplus melampaui target tanggal ini' : 'Nominal yang perlu dikejar di periode ini'}</span>
+      </div>
+    </div>
+
+    <div class="ct-progress-wrap">
+      <div class="ct-progress-labels">
+        <span>Progres Pencapaian Target Tanggal (${formatReadableRange()})</span>
+        <strong>${pct}% Tercapai (${formatIDR(omsetActual)} dari ${formatIDR(targetCustom)})</strong>
+      </div>
+      <div class="ct-progress-bar">
+        <div class="ct-progress-fill" style="width:${barWidth}%;background:${barColor};"></div>
+      </div>
+    </div>
+  `;
 }
 
 /**
@@ -425,8 +496,7 @@ function renderApp() {
 
   document.getElementById('realtimeDatePresets').classList.toggle('hidden', !isRealtimeNov);
   document.getElementById('customDateWrap').classList.toggle('hidden', !isRealtimeNov);
-  document.getElementById('fxRateText').textContent = `1 MYR = ${formatIDR(STATE.myrRate)}`;
-  document.getElementById('activeDurationText').textContent = `${days} Hari`;
+  document.getElementById('fxRateText').textContent = `Kurs: 1 MYR = ${formatIDR(STATE.myrRate)}`;
 
   if (STATE.activeTab === 'holding') {
     renderHoldingView(days);
@@ -436,7 +506,7 @@ function renderApp() {
 }
 
 /**
- * A. TAMPILAN KONSOLIDASI PAKKAWARU GROUP + REGIONAL BANDUNG & GORONTALO
+ * A. TAMPILAN KESELURUHAN PAKKAWARU GROUP
  */
 function renderHoldingView(days) {
   const keys = ['safwan', 'ansan', 'amalqu', 'latihhobi', 'sjp', 'ppm'];
@@ -444,7 +514,7 @@ function renderHoldingView(days) {
 
   const totTargetBulan = reports.reduce((a, b) => a + b.targetBulanan, 0);
   const totTargetHari = reports.reduce((a, b) => a + b.targetHarian, 0);
-  const totTargetPeriode = reports.reduce((a, b) => a + b.targetPeriode, 0);
+  const totTargetCustom = reports.reduce((a, b) => a + b.targetCustomTanggal, 0);
   const totOmset = reports.reduce((a, b) => a + b.validOmset, 0);
   const totEstimasi = reports.reduce((a, b) => a + b.estimasiBulan, 0);
   const totValidQty = reports.reduce((a, b) => a + b.validQty, 0);
@@ -452,45 +522,49 @@ function renderHoldingView(days) {
   const totCancelOmset = reports.reduce((a, b) => a + b.cancelOmset, 0);
 
   const pctBulan = totTargetBulan > 0 ? ((totOmset / totTargetBulan) * 100).toFixed(2) : '0.00';
-  const pctPeriode = totTargetPeriode > 0 ? ((totOmset / totTargetPeriode) * 100).toFixed(2) : '0.00';
+  const pctCustom = totTargetCustom > 0 ? ((totOmset / totTargetCustom) * 100).toFixed(2) : '0.00';
   const pctEstimasi = totTargetBulan > 0 ? ((totEstimasi / totTargetBulan) * 100).toFixed(2) : '0.00';
   const pctCancel = (totOmset + totCancelOmset) > 0 ? ((totCancelOmset / (totOmset + totCancelOmset)) * 100).toFixed(2) : '0.00';
 
-  document.getElementById('activePeriodTargetText').textContent = formatIDR(totTargetPeriode);
-  document.getElementById('viewBadgeTag').textContent = 'KONSOLIDASI PAKKAWARU GROUP • 6 ENTITAS BISNIS';
-  document.getElementById('viewTitleHeading').textContent = 'Executive Overview & Pencapaian Daerah';
-  document.getElementById('viewSubtitleDesc').textContent = 'Menampilkan Target Bulanan, Target Harian, Omset Tercapai (SJP & PPM Dibagi 3), dan Proyeksi Tren Bulan Berjalan';
+  document.getElementById('viewBadgeTag').textContent = 'KESELURUHAN PAKKAWARU GROUP • 6 ENTITAS';
+  document.getElementById('viewTitleHeading').textContent = 'Ringkasan Eksekutif Pakkawaru Group';
+  document.getElementById('viewSubtitleDesc').textContent = 'Target Bulanan, Target Harian, Omset Tercapai, Proyeksi Akhir Bulan & Capaian Daerah Bandung – Gorontalo';
 
   document.getElementById('channelSubPills').classList.add('hidden');
   document.getElementById('malaysiaFxBanner').classList.add('hidden');
   document.getElementById('regionalCompareSection').classList.remove('hidden');
 
-  // Render 6 Kartu Indikator Utama
+  // 1. Render Panel Target Custom Tanggal
+  renderCustomTargetBanner('Keseluruhan Pakkawaru Group', totTargetCustom, totOmset, totTargetHari, days);
+
+  // 2. Render 6 Kartu Indikator Utama
   renderSixCards([
-    { title: 'Target Bulanan', badge: '6 Entitas', value: formatIDR(totTargetBulan), subLeft: 'Target Periode Aktif:', subRight: formatCompact(totTargetPeriode), pct: 100, tone: 'tone-indigo' },
-    { title: 'Target Harian', badge: `${days} Hari Aktif`, value: formatIDR(totTargetHari), subLeft: 'Rata-rata Aktual/Hari:', subRight: formatCompact(totOmset / days), pct: Math.min(100, Number(pctPeriode)), tone: 'tone-blue' },
-    { title: 'Omset Tercapai', badge: `${pctBulan}% Bulan`, value: formatIDR(totOmset), subLeft: `Capaian vs Target ${days} Hr:`, subRight: `${pctPeriode}%`, pct: Math.min(100, Number(pctBulan)), tone: 'tone-emerald' },
-    { title: 'Estimasi Akhir Bulan', badge: `${pctEstimasi}% Target`, value: formatIDR(totEstimasi), subLeft: 'Status Proyeksi Tren:', subRight: Number(pctEstimasi) >= 100 ? 'Tercapai' : 'On Progress', pct: Math.min(100, Number(pctEstimasi)), tone: 'tone-purple' },
-    { title: 'Qty Berhasil / Proses', badge: 'E-Commerce & Meta', value: `${totValidQty.toLocaleString('id-ID')} Pcs`, subLeft: 'Rasio Pesanan Aktif:', subRight: `${(100 - Number(pctCancel)).toFixed(1)}%`, pct: 100 - Number(pctCancel), tone: 'tone-amber' },
-    { title: 'Data Cancel & Return', badge: `${pctCancel}% Penjualan`, value: `${totCancelQty.toLocaleString('id-ID')} Pcs`, subLeft: 'Nominal Batal/RTS:', subRight: formatIDR(totCancelOmset), pct: Math.min(100, Number(pctCancel)), tone: 'tone-rose' }
+    { title: 'Target Bulanan (30 Hari)', badge: '6 Entitas', value: formatIDR(totTargetBulan), subLeft: `Target ${days} Hari Ini:`, subRight: formatCompact(totTargetCustom), pct: 100, tone: 'tone-indigo' },
+    { title: 'Target Harian', badge: 'Patokan Harian', value: formatIDR(totTargetHari), subLeft: 'Rata-rata Omset/Hari:', subRight: formatCompact(totOmset / days), pct: Math.min(100, Number(pctCustom)), tone: 'tone-blue' },
+    { title: 'Omset Tercapai', badge: `${pctBulan}% dari Bulan`, value: formatIDR(totOmset), subLeft: `Progres Target ${days} Hari:`, subRight: `${pctCustom}%`, pct: Math.min(100, Number(pctBulan)), tone: 'tone-emerald' },
+    { title: 'Estimasi Akhir Bulan', badge: `${pctEstimasi}% Target`, value: formatIDR(totEstimasi), subLeft: 'Dilihat dari tren saat ini:', subRight: Number(pctEstimasi) >= 100 ? 'Tercapai' : 'On Progress', pct: Math.min(100, Number(pctEstimasi)), tone: 'tone-purple' },
+    { title: 'Qty Berhasil / Proses', badge: 'Toko & Meta', value: `${totValidQty.toLocaleString('id-ID')} Pcs`, subLeft: 'Persentase Pesanan Valid:', subRight: `${(100 - Number(pctCancel)).toFixed(1)}%`, pct: 100 - Number(pctCancel), tone: 'tone-amber' },
+    { title: 'Qty Cancel / Return', badge: `${pctCancel}% Penjualan`, value: `${totCancelQty.toLocaleString('id-ID')} Pcs`, subLeft: 'Nominal Batal/RTS:', subRight: formatIDR(totCancelOmset), pct: Math.min(100, Number(pctCancel)), tone: 'tone-rose' }
   ]);
 
-  // Render Pencapaian Per Daerah: Bandung vs Gorontalo
+  // 3. Render Pencapaian Per Daerah: Bandung vs Gorontalo
   const bandungList = reports.filter(r => r.region === 'Bandung');
   const gorontaloList = reports.filter(r => r.region === 'Gorontalo');
 
-  const bdgTarget = bandungList.reduce((a, b) => a + b.targetBulanan, 0);
-  const bdgPeriode = bandungList.reduce((a, b) => a + b.targetPeriode, 0);
+  const bdgTargetBulan = bandungList.reduce((a, b) => a + b.targetBulanan, 0);
+  const bdgTargetCustom = bandungList.reduce((a, b) => a + b.targetCustomTanggal, 0);
   const bdgOmset = bandungList.reduce((a, b) => a + b.validOmset, 0);
   const bdgEst = bandungList.reduce((a, b) => a + b.estimasiBulan, 0);
-  const bdgPct = bdgTarget > 0 ? ((bdgOmset / bdgTarget) * 100).toFixed(2) : '0.00';
+  const bdgPctCustom = bdgTargetCustom > 0 ? ((bdgOmset / bdgTargetCustom) * 100).toFixed(2) : '0.00';
+  const bdgPctBulan = bdgTargetBulan > 0 ? ((bdgOmset / bdgTargetBulan) * 100).toFixed(2) : '0.00';
 
-  const gtoTarget = gorontaloList.reduce((a, b) => a + b.targetBulanan, 0);
-  const gtoPeriode = gorontaloList.reduce((a, b) => a + b.targetPeriode, 0);
+  const gtoTargetBulan = gorontaloList.reduce((a, b) => a + b.targetBulanan, 0);
+  const gtoTargetCustom = gorontaloList.reduce((a, b) => a + b.targetCustomTanggal, 0);
   const gtoOmset = gorontaloList.reduce((a, b) => a + b.validOmset, 0);
   const gtoRaw = gorontaloList.reduce((a, b) => a + b.rawBeforeDiv3, 0);
   const gtoEst = gorontaloList.reduce((a, b) => a + b.estimasiBulan, 0);
-  const gtoPct = gtoTarget > 0 ? ((gtoOmset / gtoTarget) * 100).toFixed(2) : '0.00';
+  const gtoPctCustom = gtoTargetCustom > 0 ? ((gtoOmset / gtoTargetCustom) * 100).toFixed(2) : '0.00';
+  const gtoPctBulan = gtoTargetBulan > 0 ? ((gtoOmset / gtoTargetBulan) * 100).toFixed(2) : '0.00';
 
   document.getElementById('regionalCompareSection').innerHTML = `
     <div class="reg-card">
@@ -499,14 +573,14 @@ function renderHoldingView(days) {
           <h3>Pencapaian Daerah Bandung (4 Entitas)</h3>
           <p>PT Safwan Berkah, PT BQY Ansan, Yayasan Amalqu, Latih Hobi</p>
         </div>
-        <span class="status-badge ${Number(bdgPct) >= 100 ? 'badge-success' : 'badge-neutral'}">${bdgPct}% Bulanan</span>
+        <span class="status-badge ${Number(bdgPctCustom) >= 100 ? 'badge-success' : 'badge-neutral'}">${bdgPctCustom}% dari Target ${days} Hr</span>
       </div>
       <div class="reg-metrics">
-        <div><small>Target Bulanan</small><strong>${formatCompact(bdgTarget)}</strong></div>
+        <div><small>Target ${days} Hari</small><strong>${formatCompact(bdgTargetCustom)}</strong></div>
         <div><small>Omset Tercapai</small><strong>${formatIDR(bdgOmset)}</strong></div>
         <div><small>Estimasi Akhir Bulan</small><strong>${formatCompact(bdgEst)}</strong></div>
       </div>
-      <div class="kpi-sub"><span>Target Periode (${days} Hari): ${formatIDR(bdgPeriode)}</span><strong>${((bdgOmset / (bdgPeriode || 1)) * 100).toFixed(1)}% Periode</strong></div>
+      <div class="kpi-sub"><span>Target Bulanan Penuh: ${formatIDR(bdgTargetBulan)}</span><strong>${bdgPctBulan}% dari Target Bulanan</strong></div>
     </div>
 
     <div class="reg-card">
@@ -515,31 +589,30 @@ function renderHoldingView(days) {
           <h3>Pencapaian Daerah Gorontalo (2 Entitas Emas ÷ 3)</h3>
           <p>CV Selamat Jaya Pakkawaru (SJP) & Pakkawaru Permata Mulia (PPM)</p>
         </div>
-        <span class="status-badge ${Number(gtoPct) >= 100 ? 'badge-success' : 'badge-warning'}">${gtoPct}% Bulanan</span>
+        <span class="status-badge ${Number(gtoPctCustom) >= 100 ? 'badge-success' : 'badge-warning'}">${gtoPctCustom}% dari Target ${days} Hr</span>
       </div>
       <div class="reg-metrics">
-        <div><small>Target Bulanan</small><strong>${formatCompact(gtoTarget)}</strong></div>
+        <div><small>Target ${days} Hari</small><strong>${formatCompact(gtoTargetCustom)}</strong></div>
         <div><small>Omset Diakui (÷ 3)</small><strong>${formatIDR(gtoOmset)}</strong></div>
         <div><small>Estimasi Akhir Bulan</small><strong>${formatCompact(gtoEst)}</strong></div>
       </div>
-      <div class="kpi-sub"><span>Penjualan Emas Riil (100%): ${formatIDR(gtoRaw)}</span><strong>${((gtoOmset / (gtoPeriode || 1)) * 100).toFixed(1)}% Periode</strong></div>
+      <div class="kpi-sub"><span>Penjualan Riil (100%): ${formatIDR(gtoRaw)} • Target Bulanan: ${formatCompact(gtoTargetBulan)}</span><strong>${gtoPctBulan}% Bulanan</strong></div>
     </div>
   `;
 
-  // Render Grafik Batang & Donut
-  renderChartsForHolding(reports, totOmset, pctBulan);
+  // 4. Render Grafik & Tabel
+  renderChartsForHolding(reports, pctCustom, days);
 
-  // Render Tabel Matriks 6 Entitas
-  document.getElementById('summaryTableHeading').textContent = 'Matriks Capaian 6 Entitas Pakkawaru Group';
+  document.getElementById('summaryTableHeading').textContent = `Tabel Capaian 6 Entitas (${formatReadableRange()})`;
   document.getElementById('summaryTableHead').innerHTML = `
     <tr>
       <th>Entitas Bisnis</th>
-      <th>Daerah</th>
       <th>Target Bulanan</th>
-      <th>Target Harian</th>
+      <th>Target ${days} Hari (Custom)</th>
       <th>Omset Tercapai</th>
+      <th>% Progres (${days} Hr)</th>
       <th>Qty Berhasil / Proses</th>
-      <th>Data Cancel (Pcs, Rp & %)</th>
+      <th>Qty Cancel (Pcs, Rp & %)</th>
       <th>Estimasi Akhir Bulan</th>
       <th>Detail</th>
     </tr>
@@ -549,19 +622,22 @@ function renderHoldingView(days) {
     <tr>
       <td>
         <strong style="color:#0F172A;display:block;">${r.name}</strong>
-        <small style="color:#64748B;">${r.isGold ? 'Penjualan Riil: ' + formatIDR(r.rawBeforeDiv3) + ' (Dibagi 3)' : 'Capaian Bulanan: ' + r.persenCapaian + '%'}</small>
+        <small style="color:#64748B;">Daerah ${r.region} ${r.isGold ? '• Penjualan Riil: ' + formatIDR(r.rawBeforeDiv3) : ''}</small>
       </td>
-      <td><span class="status-badge badge-neutral">${r.region}</span></td>
       <td>${formatIDR(r.targetBulanan)}</td>
-      <td>${formatIDR(r.targetHarian)}</td>
-      <td><strong style="color:#0F172A;">${formatIDR(r.validOmset)}</strong></td>
-      <td>${r.hasQty ? r.validQty.toLocaleString('id-ID') + ' Pcs' : 'Rekap Harian'}</td>
-      <td>${r.hasQty ? `<span style="color:#BE123C;font-weight:700;">${r.cancelQty.toLocaleString('id-ID')} Pcs</span> • ${formatIDR(r.cancelOmset)} (${r.cancelRatePct}%)` : '-'}</td>
+      <td><strong style="color:#4F46E5;">${formatIDR(r.targetCustomTanggal)}</strong></td>
+      <td><strong style="color:#047857;">${formatIDR(r.validOmset)}</strong></td>
+      <td>
+        <span class="status-badge ${r.persenCustomTanggal >= 100 ? 'badge-success' : 'badge-warning'}">${r.persenCustomTanggal}%</span>
+        <small style="display:block;color:#64748B;margin-top:2px;">${r.persenBulanan}% Bulan</small>
+      </td>
+      <td>${r.hasQty ? r.validQty.toLocaleString('id-ID') + ' Pcs' : '-'}</td>
+      <td>${r.hasQty ? `<span style="color:#BE123C;font-weight:700;">${r.cancelQty.toLocaleString('id-ID')} Pcs</span><br><small>${formatIDR(r.cancelOmset)} (${r.cancelRatePct}%)</small>` : '-'}</td>
       <td>
         <strong>${formatIDR(r.estimasiBulan)}</strong>
-        <span class="status-badge ${r.estimasiPct >= 100 ? 'badge-success' : 'badge-warning'}" style="margin-left:6px;">${r.estimasiPct}%</span>
+        <small style="display:block;color:#64748B;">(${r.estimasiPct}% Target)</small>
       </td>
-      <td><button class="btn-table-jump" onclick="switchTab('${r.key}')">Buka Entitas</button></td>
+      <td><button class="btn-table-jump" onclick="switchTab('${r.key}')">Lihat Rincian</button></td>
     </tr>
   `).join('');
 }
@@ -572,19 +648,21 @@ function renderHoldingView(days) {
 function renderSingleEntityView(entityKey, days) {
   const rep = computeEntityReport(entityKey);
 
-  document.getElementById('activePeriodTargetText').textContent = formatIDR(rep.targetPeriode);
-  document.getElementById('viewBadgeTag').textContent = `DAERAH ${rep.region.toUpperCase()} • ${rep.isGold ? 'DIVISI EMAS (OMSET DIBAGI 3)' : 'UNIT BISNIS MANDIRI'}`;
+  document.getElementById('viewBadgeTag').textContent = `DAERAH ${rep.region.toUpperCase()} • ${rep.isGold ? 'OMSET PENJUALAN DIBAGI 3' : 'LAPORAN ENTITAS'}`;
   document.getElementById('viewTitleHeading').textContent = rep.name;
   document.getElementById('viewSubtitleDesc').textContent = `Target Bulanan: ${formatIDR(rep.targetBulanan)} • Target Harian: ${formatIDR(rep.targetHarian)}`;
 
   document.getElementById('regionalCompareSection').classList.add('hidden');
 
-  // Tampilkan Sub-Channel Pills untuk Safwan & BQY Ansan
+  // Render Panel Progres Target Custom Tanggal untuk Entitas Ini
+  renderCustomTargetBanner(rep.name, rep.targetCustomTanggal, rep.validOmset, rep.targetHarian, days);
+
+  // Tampilkan Pilihan Sub-Toko untuk PT Safwan & PT BQY Ansan
   const subPillsEl = document.getElementById('channelSubPills');
   if ((entityKey === 'safwan' || entityKey === 'ansan') && STATE.selectedMonth === '2026-11') {
     subPillsEl.classList.remove('hidden');
     const allChannels = computeRealtimeNovemberEntity(entityKey, days).channels;
-    const pillItems = [{ id: 'all', name: 'Semua Kanal' }, ...allChannels];
+    const pillItems = [{ id: 'all', name: 'Semua Akun / Toko' }, ...allChannels];
     subPillsEl.innerHTML = pillItems.map(p => `
       <button class="sub-pill ${STATE.subChannel === p.id ? 'active' : ''}" onclick="selectSubChannel('${p.id}')">${p.name}</button>
     `).join('');
@@ -592,41 +670,41 @@ function renderSingleEntityView(entityKey, days) {
     subPillsEl.classList.add('hidden');
   }
 
-  // Banner Konversi Ringgit ke Rupiah Khusus di Tab Safwan (Shopee Malaysia)
+  // Banner Konversi Ringgit ke Rupiah Khusus Shopee Malaysia di Tab Safwan
   const fxBanner = document.getElementById('malaysiaFxBanner');
   if (entityKey === 'safwan' && STATE.selectedMonth === '2026-11') {
     const myStats = sumSeries(REALTIME_NOV_DAILY.shopeeMalaysia, true);
-    const totalMyrSales = myStats.rawMyrValid + myStats.rawMyrCancel;
-    const myCancelPct = totalMyrSales > 0 ? ((myStats.rawMyrCancel / totalMyrSales) * 100).toFixed(2) : '0.00';
+    const totalMyr = myStats.rawMyrValid + myStats.rawMyrCancel;
+    const myCancelPct = totalMyr > 0 ? ((myStats.rawMyrCancel / totalMyr) * 100).toFixed(2) : '0.00';
     fxBanner.classList.remove('hidden');
     fxBanner.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div>
-          <strong style="font-size:14.5px;">Panel Konversi Realtime Shopee Malaysia Safwan (MYR ⇄ IDR)</strong>
-          <p style="font-size:12px;color:#94A3B8;">Otomatis mengonversi omset Ringgit Malaysia ke Rupiah pada kurs aktif 1 MYR = ${formatIDR(STATE.myrRate)}</p>
+          <strong style="font-size:15px;">Data Khusus Shopee Malaysia Safwan (Ringgit MYR & Konversi Rupiah)</strong>
+          <p style="font-size:12px;color:#94A3B8;">Dikonversi otomatis dengan kurs realtime 1 MYR = ${formatIDR(STATE.myrRate)}</p>
         </div>
-        <span class="status-badge badge-neutral">Masuk Konsolidasi PT Safwan</span>
+        <span class="status-badge badge-neutral">Digabung ke PT Safwan Berkah</span>
       </div>
       <div class="fx-grid">
         <div class="fx-item">
-          <small>Omset Berhasil (Ringgit)</small>
+          <small>Omset Tercapai (Ringgit)</small>
           <strong>${formatMYR(myStats.rawMyrValid)}</strong>
-          <span>${myStats.validQty} Pcs Berhasil/Proses</span>
+          <span>Qty Berhasil/Proses: ${myStats.validQty} Pcs</span>
         </div>
         <div class="fx-item">
-          <small>Omset Berhasil (Rupiah)</small>
+          <small>Omset Tercapai (Rupiah)</small>
           <strong>${formatIDR(myStats.validOmset)}</strong>
-          <span>Kurs ${formatIDR(STATE.myrRate)} / MYR</span>
+          <span>Hasil Konversi Kurs Aktif</span>
         </div>
         <div class="fx-item">
           <small>Data Cancel (Ringgit)</small>
           <strong>${formatMYR(myStats.rawMyrCancel)}</strong>
-          <span style="color:#FDA4AF;">${myStats.cancelQty} Pcs Batal (${myCancelPct}%)</span>
+          <span style="color:#FDA4AF;">Qty Cancel: ${myStats.cancelQty} Pcs (${myCancelPct}%)</span>
         </div>
         <div class="fx-item">
           <small>Data Cancel (Rupiah)</small>
           <strong>${formatIDR(myStats.cancelOmset)}</strong>
-          <span style="color:#FDA4AF;">Dikeluarkan dari Omset</span>
+          <span style="color:#FDA4AF;">Tidak Dimasukkan ke Omset</span>
         </div>
       </div>
     `;
@@ -636,17 +714,16 @@ function renderSingleEntityView(entityKey, days) {
 
   // Render 6 Kartu Indikator Wajib Entitas
   renderSixCards([
-    { title: 'Target Bulanan', badge: rep.short, value: formatIDR(rep.targetBulanan), subLeft: `Target Periode (${days} Hr):`, subRight: formatIDR(rep.targetPeriode), pct: 100, tone: 'tone-indigo' },
-    { title: 'Target Harian', badge: 'Patokan Harian', value: formatIDR(rep.targetHarian), subLeft: 'Rata-rata Aktual/Hari:', subRight: formatIDR(rep.validOmset / days), pct: Math.min(100, rep.persenPeriode), tone: 'tone-blue' },
-    { title: 'Omset Tercapai', badge: `${rep.persenCapaian}% Target`, value: formatIDR(rep.validOmset), subLeft: rep.isGold ? 'Penjualan Riil (100%):' : `Capaian Periode (${days} Hr):`, subRight: rep.isGold ? formatCompact(rep.rawBeforeDiv3) : `${rep.persenPeriode}%`, pct: Math.min(100, rep.persenCapaian), tone: 'tone-emerald' },
-    { title: 'Estimasi Akhir Bulan', badge: `${rep.estimasiPct}% Target`, value: formatIDR(rep.estimasiBulan), subLeft: 'Proyeksi Tren Bulan Ini:', subRight: rep.estimasiPct >= 100 ? 'Melampaui Target' : 'Perlu Digenjot', pct: Math.min(100, rep.estimasiPct), tone: 'tone-purple' },
-    { title: 'Qty Berhasil / Proses', badge: rep.hasQty ? 'Pesanan Valid' : 'Batch / Hari Aktif', value: rep.hasQty ? `${rep.validQty.toLocaleString('id-ID')} Pcs` : `${rep.validQty} Rekaman`, subLeft: 'Status Pengakuan:', subRight: `${(100 - rep.cancelRatePct).toFixed(1)}% Valid`, pct: 100 - rep.cancelRatePct, tone: 'tone-amber' },
-    { title: 'Qty & Nominal Cancel', badge: `${rep.cancelRatePct}% Penjualan`, value: `${rep.cancelQty.toLocaleString('id-ID')} Pcs`, subLeft: 'Nominal Cancel/Return:', subRight: formatIDR(rep.cancelOmset), pct: Math.min(100, rep.cancelRatePct), tone: 'tone-rose' }
+    { title: 'Target Bulanan', badge: rep.short, value: formatIDR(rep.targetBulanan), subLeft: `Target ${days} Hari Ini:`, subRight: formatIDR(rep.targetCustomTanggal), pct: 100, tone: 'tone-indigo' },
+    { title: 'Target Harian', badge: 'Per Hari', value: formatIDR(rep.targetHarian), subLeft: 'Rata-rata Omset/Hari:', subRight: formatIDR(rep.validOmset / days), pct: Math.min(100, rep.persenCustomTanggal), tone: 'tone-blue' },
+    { title: 'Omset Tercapai', badge: `${rep.persenBulanan}% Bulan`, value: formatIDR(rep.validOmset), subLeft: rep.isGold ? 'Penjualan Riil (100%):' : `Progres Target ${days} Hari:`, subRight: rep.isGold ? formatCompact(rep.rawBeforeDiv3) : `${rep.persenCustomTanggal}%`, pct: Math.min(100, rep.persenBulanan), tone: 'tone-emerald' },
+    { title: 'Estimasi Akhir Bulan', badge: `${rep.estimasiPct}% Target`, value: formatIDR(rep.estimasiBulan), subLeft: 'Dilihat dari tren saat ini:', subRight: rep.estimasiPct >= 100 ? 'Tercapai' : 'Perlu Digenjot', pct: Math.min(100, rep.estimasiPct), tone: 'tone-purple' },
+    { title: 'Qty Berhasil / Proses', badge: rep.hasQty ? 'Pesanan Valid' : 'Hari / Batch Aktif', value: rep.hasQty ? `${rep.validQty.toLocaleString('id-ID')} Pcs` : `${rep.validQty} Transaksi`, subLeft: 'Persentase Berhasil:', subRight: `${(100 - rep.cancelRatePct).toFixed(1)}%`, pct: 100 - rep.cancelRatePct, tone: 'tone-amber' },
+    { title: 'Qty Cancel / Return', badge: `${rep.cancelRatePct}% Penjualan`, value: `${rep.cancelQty.toLocaleString('id-ID')} Pcs`, subLeft: 'Nominal Cancel:', subRight: formatIDR(rep.cancelOmset), pct: Math.min(100, rep.cancelRatePct), tone: 'tone-rose' }
   ]);
 
-  // Grafik & Tabel Spesifik Entitas
-  renderChartsForSingleEntity(entityKey, rep);
-  renderTableForSingleEntity(entityKey, rep);
+  renderChartsForSingleEntity(entityKey, rep, days);
+  renderTableForSingleEntity(entityKey, rep, days);
 }
 
 function renderSixCards(cards) {
@@ -670,10 +747,10 @@ function renderSixCards(cards) {
 
 /**
  * ============================================================================
- * VISUALISASI CHART.JS (INTERAKTIF & RESPONSIF)
+ * VISUALISASI GRAFIK & TABEL RINCIAN AKUN
  * ============================================================================
  */
-function renderChartsForHolding(reports, totOmset, pctBulan) {
+function renderChartsForHolding(reports, pctCustom, days) {
   if (STATE.chartMode === 'monthly_trend') {
     const mKeys = Object.keys(MONTHLY_HISTORY_2026);
     const labels = mKeys.map(k => MONTHLY_HISTORY_2026[k].label.slice(0, 3));
@@ -691,12 +768,20 @@ function renderChartsForHolding(reports, totOmset, pctBulan) {
       'Omset Tercapai',
       'Estimasi Akhir Bulan'
     );
-  } else {
+  } else if (STATE.chartMode === 'monthly_target') {
     drawBarChart(
       reports.map(r => r.short),
       reports.map(r => r.targetBulanan),
       reports.map(r => r.validOmset),
-      'Target Bulanan',
+      'Target Bulanan (30 Hr)',
+      'Omset Tercapai'
+    );
+  } else {
+    drawBarChart(
+      reports.map(r => r.short),
+      reports.map(r => r.targetCustomTanggal),
+      reports.map(r => r.validOmset),
+      `Target ${days} Hari Ini`,
       'Omset Tercapai'
     );
   }
@@ -704,13 +789,12 @@ function renderChartsForHolding(reports, totOmset, pctBulan) {
   drawDonutChart(
     reports.map(r => r.short),
     reports.map(r => r.validOmset),
-    pctBulan + '%',
-    'Capaian Total'
+    pctCustom + '%',
+    `Progres ${days} Hr`
   );
 }
 
-function renderChartsForSingleEntity(entityKey, rep) {
-  // Bar Chart: Tren Bulanan Jan - Nov 2026 untuk Entitas tersebut
+function renderChartsForSingleEntity(entityKey, rep, days) {
   const mKeys = Object.keys(MONTHLY_HISTORY_2026);
   const labels = [...mKeys.map(k => MONTHLY_HISTORY_2026[k].label.slice(0, 3)), 'Nov (Live)'];
   const targets = [...mKeys.map(k => MONTHLY_HISTORY_2026[k][entityKey][0]), rep.targetBulanan];
@@ -722,51 +806,51 @@ function renderChartsForSingleEntity(entityKey, rep) {
     rep.validOmset
   ];
 
-  document.getElementById('barChartHeading').textContent = `Tren Target vs Capaian Bulanan 2026 — ${rep.short}`;
+  document.getElementById('barChartHeading').textContent = `Tren Bulanan 2026 — ${rep.short}`;
   drawBarChart(labels, targets, actuals, 'Target Bulanan', 'Omset Tercapai');
 
   if (rep.channels && rep.channels.length > 0) {
-    document.getElementById('donutChartHeading').textContent = 'Kontribusi Omset per Kanal Toko';
+    document.getElementById('donutChartHeading').textContent = 'Porsi Omset per Akun / Toko';
     drawDonutChart(
       rep.channels.map(c => c.name),
       rep.channels.map(c => c.validOmset),
-      rep.persenCapaian + '%',
-      'Target Bulanan'
+      rep.persenCustomTanggal + '%',
+      `Progres ${days} Hr`
     );
   } else {
-    document.getElementById('donutChartHeading').textContent = 'Omset Tercapai vs Sisa Target Bulanan';
+    document.getElementById('donutChartHeading').textContent = `Progres Target ${days} Hari Ini`;
     drawDonutChart(
-      ['Omset Tercapai', 'Sisa Target Bulanan'],
-      [rep.validOmset, Math.max(0, rep.targetBulanan - rep.validOmset)],
-      rep.persenCapaian + '%',
-      'Capaian'
+      ['Omset Tercapai', `Sisa Target ${days} Hari`],
+      [rep.validOmset, Math.max(0, rep.targetCustomTanggal - rep.validOmset)],
+      rep.persenCustomTanggal + '%',
+      `Progres ${days} Hr`
     );
   }
 }
 
-function renderTableForSingleEntity(entityKey, rep) {
+function renderTableForSingleEntity(entityKey, rep, days) {
   if (rep.channels && rep.channels.length > 0 && STATE.selectedMonth === '2026-11') {
-    document.getElementById('summaryTableHeading').textContent = `Rincian Performa Kanal — ${rep.name}`;
+    document.getElementById('summaryTableHeading').textContent = `Rincian Performa per Akun / Toko — ${rep.name} (${formatReadableRange()})`;
     document.getElementById('summaryTableHead').innerHTML = `
       <tr>
-        <th>Nama Kanal / Toko</th>
-        <th>Qty Berhasil / Proses</th>
+        <th>Nama Akun / Toko</th>
         <th>Omset Tercapai</th>
-        <th>Qty Cancel / Return</th>
-        <th>Nominal Cancel</th>
+        <th>Qty Berhasil / Proses</th>
+        <th>Qty Cancel / RTS</th>
+        <th>Nominal Cancel / RTS</th>
         <th>% Cancel dari Penjualan</th>
       </tr>
     `;
-    const allChannels = computeRealtimeNovemberEntity(entityKey, getActiveDaysCount()).channels;
+    const allChannels = computeRealtimeNovemberEntity(entityKey, days).channels;
     document.getElementById('summaryTableBody').innerHTML = allChannels.map(c => {
       const tot = c.validOmset + c.cancelOmset;
       const cPct = tot > 0 ? ((c.cancelOmset / tot) * 100).toFixed(2) : '0.00';
-      const myrNote = c.isMyr ? `<br><small style="color:#2563EB;">(${formatMYR(c.rawMyrValid)} | Cancel: ${formatMYR(c.rawMyrCancel)})</small>` : '';
+      const myrNote = c.isMyr ? `<br><small style="color:#2563EB;">Ringgit: ${formatMYR(c.rawMyrValid)} (Cancel: ${formatMYR(c.rawMyrCancel)})</small>` : '';
       return `
         <tr>
           <td><strong>${c.name}</strong>${myrNote}</td>
-          <td>${c.validQty.toLocaleString('id-ID')} Pcs</td>
-          <td><strong style="color:#0F172A;">${formatIDR(c.validOmset)}</strong></td>
+          <td><strong style="color:#047857;">${formatIDR(c.validOmset)}</strong></td>
+          <td><strong>${c.validQty.toLocaleString('id-ID')} Pcs</strong></td>
           <td><span class="status-badge badge-danger">${c.cancelQty.toLocaleString('id-ID')} Pcs</span></td>
           <td style="color:#BE123C;font-weight:700;">${formatIDR(c.cancelOmset)}</td>
           <td><strong>${cPct}%</strong></td>
@@ -774,20 +858,19 @@ function renderTableForSingleEntity(entityKey, rep) {
       `;
     }).join('');
   } else {
-    // Tabel Rekapitulasi Bulanan Jan - Nov 2026 untuk Entitas tersebut
-    document.getElementById('summaryTableHeading').textContent = `Histori Pencapaian Bulanan 2026 — ${rep.name}`;
+    document.getElementById('summaryTableHeading').textContent = `Rekapitulasi Pencapaian Bulanan 2026 — ${rep.name}`;
     document.getElementById('summaryTableHead').innerHTML = `
       <tr>
         <th>Bulan</th>
         <th>Target Bulanan</th>
         <th>Target Harian</th>
-        <th>${rep.isGold ? 'Penjualan Riil (100%)' : 'Status Data'}</th>
+        <th>${rep.isGold ? 'Penjualan Riil (100%)' : 'Jenis Data'}</th>
         <th>Omset Tercapai ${rep.isGold ? '(Dibagi 3)' : ''}</th>
         <th>% Capaian</th>
       </tr>
     `;
     const mKeys = Object.keys(MONTHLY_HISTORY_2026);
-    const rowsHtml = mKeys.map(k => {
+    document.getElementById('summaryTableBody').innerHTML = mKeys.map(k => {
       const t = MONTHLY_HISTORY_2026[k][entityKey][0];
       const raw = MONTHLY_HISTORY_2026[k][entityKey][1];
       const val = rep.isGold ? Math.round(raw / 3) : raw;
@@ -797,13 +880,12 @@ function renderTableForSingleEntity(entityKey, rep) {
           <td><strong>${MONTHLY_HISTORY_2026[k].label}</strong></td>
           <td>${formatIDR(t)}</td>
           <td>${formatIDR(t / 30)}</td>
-          <td>${rep.isGold ? formatIDR(raw) : 'Rekap Historis'}</td>
+          <td>${rep.isGold ? formatIDR(raw) : 'Data Historis'}</td>
           <td><strong>${formatIDR(val)}</strong></td>
           <td><span class="status-badge ${Number(pct) >= 100 ? 'badge-success' : 'badge-neutral'}">${pct}%</span></td>
         </tr>
       `;
-    });
-    document.getElementById('summaryTableBody').innerHTML = rowsHtml.join('');
+    }).join('');
   }
 }
 
@@ -816,7 +898,7 @@ function drawBarChart(labels, s1, s2, l1, l2) {
     data: {
       labels,
       datasets: [
-        { label: l1, data: s1, backgroundColor: '#2563EB', borderRadius: 6, barPercentage: 0.65, categoryPercentage: 0.6 },
+        { label: l1, data: s1, backgroundColor: '#4F46E5', borderRadius: 6, barPercentage: 0.65, categoryPercentage: 0.6 },
         { label: l2, data: s2, backgroundColor: '#10B981', borderRadius: 6, barPercentage: 0.65, categoryPercentage: 0.6 }
       ]
     },
@@ -882,7 +964,7 @@ function drawDonutChart(labels, values, centerBig, centerSmall) {
 
 /**
  * ============================================================================
- * KURS MYR REALTIME & SINKRONISASI SPREADSHEET / FIREBASE
+ * KURS MYR REALTIME & EVENT LISTENERS
  * ============================================================================
  */
 async function fetchLiveMyrExchangeRate() {
@@ -894,40 +976,9 @@ async function fetchLiveMyrExchangeRate() {
       localStorage.setItem('pg_myr_rate', STATE.myrRate);
       renderApp();
     }
-  } catch (_) {
-    // Gunakan nilai default / tersimpan jika sedang offline
-  }
+  } catch (_) {}
 }
 
-async function syncWithSpreadsheetAndFirebase(showNotice = false) {
-  const badge = document.getElementById('lastSyncText');
-  badge.textContent = 'Menyinkronkan...';
-  await fetchLiveMyrExchangeRate();
-
-  const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-  badge.textContent = 'Sync: ' + timeStr;
-  renderApp();
-
-  if (STATE.firebaseUrl) {
-    try {
-      await fetch(STATE.firebaseUrl.replace(/\/$/, '') + '/pakkawaruExecutive.json', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updatedAt: timeStr, myrRate: STATE.myrRate })
-      });
-    } catch (_) {}
-  }
-
-  if (showNotice) {
-    alert('Data realtime dan kurs Ringgit Malaysia berhasil diperbarui.');
-  }
-}
-
-/**
- * ============================================================================
- * NAVIGASI, FILTER, & GERBANG AUTENTIKASI
- * ============================================================================
- */
 window.switchTab = function(tabKey) {
   STATE.activeTab = tabKey;
   STATE.subChannel = 'all';
@@ -949,7 +1000,6 @@ function unlockDashboard() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Cek Sesi Login
   if (sessionStorage.getItem(AUTH_CONFIG.sessionKey) === 'UNLOCKED') {
     unlockDashboard();
   }
@@ -977,32 +1027,32 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('securityGateOverlay').classList.remove('hidden');
   });
 
-  // Klik Tab Navigasi
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
   });
 
   document.getElementById('btnHomeLogo').addEventListener('click', () => window.switchTab('holding'));
 
-  // Pemilih Bulan
   document.getElementById('monthSelector').addEventListener('change', e => {
     STATE.selectedMonth = e.target.value;
     renderApp();
   });
 
-  // Tombol Preset Rentang Tanggal
   document.querySelectorAll('#realtimeDatePresets .chip-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#realtimeDatePresets .chip-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const r = btn.dataset.range;
       STATE.rangePreset = r;
-      if (r === 'this_month' || r === 'last_30') {
+      if (r === 'this_month') {
         STATE.startDate = '2026-11-01';
         STATE.endDate = '2026-11-13';
+      } else if (r === '10_days') {
+        STATE.startDate = '2026-11-01';
+        STATE.endDate = '2026-11-10';
       } else if (r === 'last_7') {
-        STATE.startDate = '2026-11-07';
-        STATE.endDate = '2026-11-13';
+        STATE.startDate = '2026-11-05';
+        STATE.endDate = '2026-11-11';
       }
       document.getElementById('filterStartDate').value = STATE.startDate;
       document.getElementById('filterEndDate').value = STATE.endDate;
@@ -1010,7 +1060,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Input Tanggal Custom
   ['filterStartDate', 'filterEndDate'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
       const s = document.getElementById('filterStartDate').value;
@@ -1030,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderApp();
   });
 
-  // Modal Pengaturan
   document.getElementById('btnOpenConfig').addEventListener('click', () => {
     document.getElementById('cfgSheetId').value = STATE.sheetId;
     document.getElementById('cfgMyrRate').value = STATE.myrRate;
@@ -1053,5 +1101,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderApp();
   });
 
-  document.getElementById('btnSyncNow').addEventListener('click', () => syncWithSpreadsheetAndFirebase(true));
+  document.getElementById('btnSyncNow').addEventListener('click', async () => {
+    await fetchLiveMyrExchangeRate();
+    document.getElementById('lastSyncText').textContent = 'Sync: ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+    renderApp();
+  });
 });

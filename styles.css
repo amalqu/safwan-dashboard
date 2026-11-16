@@ -21,9 +21,9 @@
   --radius-xl: 18px;
   --radius-lg: 14px;
   --radius-md: 10px;
-  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 20px 40px -8px rgba(15, 23, 42, 0.14);
+  --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 10px 26px -4px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 20px 40px -8px rgba(15, 23, 42, 0.16);
 }
 
 * {
@@ -69,7 +69,7 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 26px;
+  margin-bottom: 24px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--border-color);
 }
@@ -97,18 +97,12 @@ body {
   border: 1px solid var(--border-color);
 }
 
-.m-bar {
-  width: 5px;
-  border-radius: 3px;
-}
+.m-bar { width: 5px; border-radius: 3px; }
 .b-blue { height: 14px; background: var(--primary); }
 .b-green { height: 20px; background: var(--emerald); }
 .b-indigo { height: 11px; background: var(--indigo); }
 
-.auth-field {
-  margin-bottom: 16px;
-}
-
+.auth-field { margin-bottom: 16px; }
 .auth-field label {
   display: block;
   font-size: 12.5px;
@@ -177,13 +171,10 @@ body {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.2s;
 }
 
-.btn-auth-submit:hover {
-  background: #1D4ED8;
-  transform: translateY(-1px);
-}
+.btn-auth-submit:hover { background: #1D4ED8; }
 
 /* ================= HEADER UTAMA ================= */
 .top-header {
@@ -199,41 +190,12 @@ body {
   z-index: 60;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.brand-title-wrap {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand-text {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-  line-height: 1.1;
-}
-
-.brand-sub {
-  color: var(--primary);
-  margin-left: 3px;
-}
-
-.brand-tagline {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-light);
-}
+.header-left { display: flex; align-items: center; gap: 18px; }
+.brand-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.brand-title-wrap { display: flex; flex-direction: column; }
+.brand-text { font-size: 18px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.1; }
+.brand-sub { color: var(--primary); margin-left: 3px; }
+.brand-tagline { font-size: 10.5px; font-weight: 600; color: var(--text-light); }
 
 .fx-badge {
   display: inline-flex;
@@ -247,11 +209,7 @@ body {
   font-weight: 700;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.header-right { display: flex; align-items: center; gap: 10px; }
 
 .sync-badge {
   display: flex;
@@ -287,11 +245,6 @@ body {
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-header-action:hover {
-  background: #1D4ED8;
 }
 
 .icon-btn {
@@ -305,12 +258,6 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
-}
-
-.icon-btn:hover {
-  background: #F8FAFC;
-  color: var(--primary);
 }
 
 .icon-btn.danger-hover:hover {
@@ -339,23 +286,15 @@ body {
   border: none;
   padding: 14px 4px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
   position: relative;
   white-space: nowrap;
-  transition: color 0.2s;
 }
 
-.nav-tab:hover {
-  color: var(--text-dark);
-}
-
-.nav-tab.active {
-  color: var(--primary);
-}
-
+.nav-tab.active { color: var(--primary); }
 .nav-tab.active::after {
   content: '';
   position: absolute;
@@ -367,7 +306,7 @@ body {
   border-radius: 3px 3px 0 0;
 }
 
-/* ================= PITA FILTER PERIODE & TANGGAL ================= */
+/* ================= BAR FILTER TANGGAL ================= */
 .filter-bar {
   background: #FFFFFF;
   border-bottom: 1px solid var(--border-color);
@@ -395,22 +334,13 @@ body {
   gap: 12px;
 }
 
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-item label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-muted);
-}
+.filter-item { display: flex; align-items: center; gap: 8px; }
+.filter-item label { font-size: 12.5px; font-weight: 700; color: var(--text-body); }
 
 .select-control, .select-control-sm {
   background: #F8FAFC;
   border: 1px solid var(--border-color);
-  padding: 7px 12px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-family: inherit;
   font-size: 12.5px;
@@ -419,47 +349,34 @@ body {
   cursor: pointer;
 }
 
-.select-control-sm {
-  padding: 6px 10px;
-  font-size: 12px;
-}
+.select-control-sm { padding: 6px 10px; font-size: 12px; }
 
-.preset-buttons {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.preset-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .chip-btn {
   background: #F1F5F9;
   border: 1px solid transparent;
-  padding: 6px 12px;
+  padding: 7px 13px;
   border-radius: 8px;
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-body);
   cursor: pointer;
-  transition: all 0.15s;
-}
-
-.chip-btn:hover {
-  background: #E2E8F0;
 }
 
 .chip-btn.active {
-  background: var(--primary-soft);
-  border-color: #BFDBFE;
-  color: var(--primary);
+  background: var(--primary);
+  color: #FFFFFF;
 }
 
 .custom-date-box {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #F8FAFC;
-  border: 1px solid var(--border-color);
-  padding: 4px 10px;
+  gap: 8px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 5px 12px;
   border-radius: 8px;
 }
 
@@ -467,41 +384,14 @@ body {
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 800;
   color: var(--primary);
   outline: none;
   cursor: pointer;
 }
 
-.custom-date-box span {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.filter-group-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.metric-pill {
-  background: #F8FAFC;
-  border: 1px solid var(--border-color);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.metric-pill span { color: var(--text-muted); font-weight: 600; }
-.metric-pill strong { color: var(--text-dark); font-weight: 800; }
-.metric-pill.pill-indigo { background: var(--indigo-soft); border-color: #C7D2FE; }
-.metric-pill.pill-indigo strong { color: var(--indigo); }
+.custom-date-box span { font-size: 11.5px; color: var(--text-muted); font-weight: 700; }
 
 /* ================= CONTAINER UTAMA ================= */
 .main-container {
@@ -510,7 +400,7 @@ body {
   padding: 24px 28px 60px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .section-top-bar {
@@ -533,17 +423,8 @@ body {
   margin-bottom: 6px;
 }
 
-.section-heading {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-dark);
-}
-
-.section-desc {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
+.section-heading { font-size: 23px; font-weight: 800; color: var(--text-dark); }
+.section-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
 .sub-channel-pills {
   display: flex;
@@ -558,7 +439,7 @@ body {
 .sub-pill {
   background: transparent;
   border: none;
-  padding: 6px 12px;
+  padding: 7px 13px;
   border-radius: 7px;
   font-family: inherit;
   font-size: 12px;
@@ -567,12 +448,110 @@ body {
   cursor: pointer;
 }
 
-.sub-pill.active {
-  background: var(--primary);
-  color: #FFFFFF;
+.sub-pill.active { background: var(--primary); color: #FFFFFF; }
+
+/* ================= FITUR BARU: PANEL PROGRES TARGET CUSTOM TANGGAL ================= */
+.custom-target-banner {
+  background: #FFFFFF;
+  border: 2px solid #DBEAFE;
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-md);
 }
 
-/* ================= 6 KARTU KPI WAJIB ================= */
+.ct-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ct-title-box h3 {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.ct-title-box p {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.ct-status-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.ct-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.ct-metric-box {
+  background: #F8FAFC;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 13px 15px;
+}
+
+.ct-metric-box small {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.ct-metric-box strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.ct-metric-box span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.ct-progress-wrap {
+  background: #F8FAFC;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.ct-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.ct-progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #E2E8F0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ct-progress-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+/* ================= KARTU INDIKATOR UTAMA ================= */
 .kpi-six-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -589,12 +568,6 @@ body {
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .kpi-top {
@@ -615,7 +588,7 @@ body {
 .kpi-badge {
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
 }
 
@@ -637,16 +610,13 @@ body {
 
 .kpi-bar-track {
   width: 100%;
-  height: 5px;
+  height: 6px;
   background: #F1F5F9;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.kpi-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-}
+.kpi-bar-fill { height: 100%; border-radius: 4px; }
 
 .tone-blue .kpi-badge { background: var(--primary-soft); color: var(--primary); }
 .tone-blue .kpi-bar-fill { background: var(--primary); }
@@ -666,7 +636,7 @@ body {
 .tone-purple .kpi-badge { background: var(--purple-soft); color: var(--purple); }
 .tone-purple .kpi-bar-fill { background: var(--purple); }
 
-/* ================= BANNER KONVERSI SHOPEE MALAYSIA (MYR <-> IDR) ================= */
+/* ================= BANNER KONVERSI SHOPEE MALAYSIA ================= */
 .fx-conversion-panel {
   background: linear-gradient(135deg, #1E293B, #0F172A);
   color: #FFFFFF;
@@ -678,38 +648,22 @@ body {
 .fx-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
   margin-top: 12px;
 }
 
 .fx-item {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   padding: 12px 14px;
 }
 
-.fx-item small {
-  display: block;
-  font-size: 11px;
-  color: #94A3B8;
-  margin-bottom: 4px;
-}
+.fx-item small { display: block; font-size: 11px; color: #94A3B8; margin-bottom: 4px; }
+.fx-item strong { display: block; font-size: 16.5px; font-weight: 800; color: #F8FAFC; }
+.fx-item span { font-size: 11.5px; color: #38BDF8; font-weight: 700; }
 
-.fx-item strong {
-  display: block;
-  font-size: 16px;
-  font-weight: 800;
-  color: #F8FAFC;
-}
-
-.fx-item span {
-  font-size: 11.5px;
-  color: #38BDF8;
-  font-weight: 700;
-}
-
-/* ================= KOMPARASI WILAYAH BANDUNG VS GORONTALO ================= */
+/* ================= PENCAPAIAN PER DAERAH: BANDUNG & GORONTALO ================= */
 .regional-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -731,15 +685,8 @@ body {
   margin-bottom: 14px;
 }
 
-.reg-head h3 {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.reg-head p {
-  font-size: 12px;
-  color: var(--text-muted);
-}
+.reg-head h3 { font-size: 16px; font-weight: 800; }
+.reg-head p { font-size: 12px; color: var(--text-muted); }
 
 .reg-metrics {
   display: grid;
@@ -751,22 +698,13 @@ body {
   margin-bottom: 12px;
 }
 
-.reg-metrics small {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-}
+.reg-metrics small { display: block; font-size: 11px; color: var(--text-muted); }
+.reg-metrics strong { font-size: 14.5px; font-weight: 800; color: var(--text-dark); }
 
-.reg-metrics strong {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text-dark);
-}
-
-/* ================= PANEL GRAFIK DUA KOLOM ================= */
+/* ================= GRAFIK & TABEL ================= */
 .charts-two-col {
   display: grid;
-  grid-template-columns: 1.9fr 1fr;
+  grid-template-columns: 1.85fr 1fr;
   gap: 20px;
 }
 
@@ -787,47 +725,15 @@ body {
   margin-bottom: 16px;
 }
 
-.panel-title {
-  font-size: 15.5px;
-  font-weight: 800;
-}
+.panel-title { font-size: 16px; font-weight: 800; }
+.panel-subtitle { font-size: 12px; color: var(--text-muted); }
 
-.panel-subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
-}
+.chart-box-lg { height: 300px; position: relative; }
+.chart-box-donut { height: 220px; position: relative; display: flex; align-items: center; justify-content: center; }
 
-.chart-box-lg {
-  height: 300px;
-  position: relative;
-}
-
-.chart-box-donut {
-  height: 220px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.donut-center-info {
-  position: absolute;
-  text-align: center;
-  pointer-events: none;
-}
-
-.donut-center-info strong {
-  display: block;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--text-dark);
-}
-
-.donut-center-info span {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
+.donut-center-info { position: absolute; text-align: center; pointer-events: none; }
+.donut-center-info strong { display: block; font-size: 20px; font-weight: 800; color: var(--text-dark); }
+.donut-center-info span { font-size: 11px; color: var(--text-muted); font-weight: 600; }
 
 .donut-legend-list {
   margin-top: 14px;
@@ -850,26 +756,10 @@ body {
   white-space: nowrap;
 }
 
-.legend-swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+.legend-swatch { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
-/* ================= TABEL RINGKASAN BERSIH ================= */
-.table-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.clean-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-  min-width: 760px;
-}
-
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.clean-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 780px; }
 .clean-table th {
   text-align: left;
   padding: 12px 14px;
@@ -881,27 +771,16 @@ body {
   letter-spacing: 0.3px;
   border-bottom: 1px solid var(--border-color);
 }
-
 .clean-table td {
-  padding: 13px 14px;
+  padding: 14px;
   border-bottom: 1px solid #F1F5F9;
   color: var(--text-body);
   font-weight: 600;
   vertical-align: middle;
 }
+.clean-table tbody tr:hover { background: #F8FAFC; }
 
-.clean-table tbody tr:hover {
-  background: #F8FAFC;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
+.status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 .badge-success { background: var(--emerald-soft); color: #047857; }
 .badge-warning { background: var(--amber-soft); color: #B45309; }
 .badge-danger { background: var(--rose-soft); color: #BE123C; }
@@ -911,18 +790,14 @@ body {
   background: var(--primary-soft);
   color: var(--primary);
   border: none;
-  padding: 6px 12px;
+  padding: 7px 13px;
   border-radius: 7px;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
-
-.btn-table-jump:hover {
-  background: var(--primary);
-  color: #FFFFFF;
-}
+.btn-table-jump:hover { background: var(--primary); color: #FFFFFF; }
 
 /* ================= MODAL PENGATURAN ================= */
 .modal-overlay {
@@ -946,92 +821,27 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-.modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .modal-head h3 { font-size: 17px; font-weight: 800; }
-
-.btn-close-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: none;
-  background: #F1F5F9;
-  cursor: pointer;
-  font-weight: 700;
-}
-
+.btn-close-icon { width: 30px; height: 30px; border-radius: 50%; border: none; background: #F1F5F9; cursor: pointer; font-weight: 700; }
 .form-row { margin-bottom: 14px; }
 .form-row label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: var(--text-body); }
-.form-row input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  font-family: inherit;
-  font-size: 13px;
-}
+.form-row input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; font-size: 13px; }
+.btn-primary-full { width: 100%; background: var(--primary); color: #FFFFFF; border: none; padding: 11px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 
-.btn-primary-full {
-  width: 100%;
-  background: var(--primary);
-  color: #FFFFFF;
-  border: none;
-  padding: 11px;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* ================= RESPONSIVE BREAKPOINTS (IPAD, TABLET & MOBILE) ================= */
+/* ================= RESPONSIVE ALL-DEVICE (MOBILE, IPAD, TABLET) ================= */
 @media (max-width: 1100px) {
-  .kpi-six-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .charts-two-col {
-    grid-template-columns: 1fr;
-  }
-  .fx-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .ct-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-six-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-two-col { grid-template-columns: 1fr; }
+  .fx-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .top-header {
-    padding: 10px 16px;
-    height: auto;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .fx-badge {
-    display: none;
-  }
-  .sub-navbar, .filter-bar, .main-container {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .filter-bar {
-    position: static;
-  }
-  .regional-grid {
-    grid-template-columns: 1fr;
-  }
-  .kpi-six-grid {
-    grid-template-columns: 1fr;
-  }
-  .fx-grid {
-    grid-template-columns: 1fr;
-  }
-  .reg-metrics {
-    grid-template-columns: 1fr;
-  }
-  .section-heading {
-    font-size: 18px;
-  }
+  .top-header { padding: 10px 16px; height: auto; flex-wrap: wrap; gap: 10px; }
+  .fx-badge { display: none; }
+  .sub-navbar, .filter-bar, .main-container { padding-left: 16px; padding-right: 16px; }
+  .filter-bar { position: static; }
+  .ct-metrics-grid, .regional-grid, .kpi-six-grid, .fx-grid, .reg-metrics { grid-template-columns: 1fr; }
+  .section-heading { font-size: 19px; }
 }
