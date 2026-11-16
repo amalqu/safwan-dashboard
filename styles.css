@@ -18,11 +18,11 @@
   --purple: #7C3AED;
   --purple-soft: #F5F3FF;
   --border-color: #E2E8F0;
-  --radius-xl: 18px;
+  --radius-xl: 16px;
   --radius-lg: 14px;
   --radius-md: 10px;
-  --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 10px 26px -4px rgba(15, 23, 42, 0.07);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 20px 40px -8px rgba(15, 23, 42, 0.16);
 }
 
@@ -74,17 +74,8 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-.auth-brand h2 {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--text-dark);
-}
-
-.auth-brand p {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
+.auth-brand h2 { font-size: 20px; font-weight: 800; color: var(--text-dark); }
+.auth-brand p { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
 .logo-mark {
   display: flex;
@@ -137,12 +128,7 @@ body {
   text-align: center;
 }
 
-.auth-hint {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 5px;
-}
+.auth-hint { display: block; font-size: 11px; color: var(--text-muted); margin-top: 5px; }
 
 .auth-error {
   background: var(--rose-soft);
@@ -171,15 +157,13 @@ body {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.2s;
 }
-
 .btn-auth-submit:hover { background: #1D4ED8; }
 
-/* ================= HEADER UTAMA ================= */
+/* ================= HEADER ATAS & SUB-NAVBAR ================= */
 .top-header {
   background: var(--bg-card);
-  height: 68px;
+  height: 64px;
   padding: 0 28px;
   display: flex;
   align-items: center;
@@ -203,7 +187,7 @@ body {
   gap: 6px;
   background: var(--indigo-soft);
   color: var(--indigo);
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
@@ -217,7 +201,7 @@ body {
   gap: 7px;
   background: #F8FAFC;
   border: 1px solid var(--border-color);
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
@@ -266,11 +250,13 @@ body {
   border-color: #FECDD3;
 }
 
-/* ================= NAVIGASI 7 TAB ENTITAS ================= */
 .sub-navbar {
   background: var(--bg-card);
   padding: 0 28px;
   border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 64px;
+  z-index: 55;
 }
 
 .nav-tabs {
@@ -284,7 +270,7 @@ body {
 .nav-tab {
   background: none;
   border: none;
-  padding: 14px 4px;
+  padding: 13px 4px;
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 700;
@@ -306,41 +292,52 @@ body {
   border-radius: 3px 3px 0 0;
 }
 
-/* ================= BAR FILTER TANGGAL ================= */
-.filter-bar {
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--border-color);
-  padding: 12px 28px;
-  position: sticky;
-  top: 68px;
-  z-index: 50;
-  box-shadow: var(--shadow-sm);
+/* ================= CONTAINER UTAMA & PANEL FILTER TANGGAL ================= */
+.main-container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 20px 28px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.filter-bar-inner {
-  max-width: 1400px;
-  margin: 0 auto;
+.control-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+  box-shadow: var(--shadow-sm);
 }
 
-.filter-group-left {
+.control-left, .control-right {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.filter-item { display: flex; align-items: center; gap: 8px; }
-.filter-item label { font-size: 12.5px; font-weight: 700; color: var(--text-body); }
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-group label, .date-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-body);
+}
 
 .select-control, .select-control-sm {
   background: #F8FAFC;
   border: 1px solid var(--border-color);
-  padding: 8px 12px;
+  padding: 7px 12px;
   border-radius: 8px;
   font-family: inherit;
   font-size: 12.5px;
@@ -356,7 +353,7 @@ body {
 .chip-btn {
   background: #F1F5F9;
   border: 1px solid transparent;
-  padding: 7px 13px;
+  padding: 7px 12px;
   border-radius: 8px;
   font-family: inherit;
   font-size: 12px;
@@ -374,7 +371,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #EFF6FF;
+  background: var(--primary-soft);
   border: 1px solid #BFDBFE;
   padding: 5px 12px;
   border-radius: 8px;
@@ -393,16 +390,7 @@ body {
 
 .custom-date-box span { font-size: 11.5px; color: var(--text-muted); font-weight: 700; }
 
-/* ================= CONTAINER UTAMA ================= */
-.main-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 28px 60px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
+/* ================= JUDUL & SUB-FILTER TOKO ================= */
 .section-top-bar {
   display: flex;
   align-items: flex-end;
@@ -420,11 +408,11 @@ body {
   padding: 4px 10px;
   border-radius: 6px;
   letter-spacing: 0.4px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.section-heading { font-size: 23px; font-weight: 800; color: var(--text-dark); }
-.section-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.section-heading { font-size: 22px; font-weight: 800; color: var(--text-dark); }
+.section-desc { font-size: 13px; color: var(--text-muted); }
 
 .sub-channel-pills {
   display: flex;
@@ -450,108 +438,83 @@ body {
 
 .sub-pill.active { background: var(--primary); color: #FFFFFF; }
 
-/* ================= FITUR BARU: PANEL PROGRES TARGET CUSTOM TANGGAL ================= */
-.custom-target-banner {
-  background: #FFFFFF;
-  border: 2px solid #DBEAFE;
-  border-radius: var(--radius-xl);
-  padding: 20px 24px;
-  box-shadow: var(--shadow-md);
+/* ================= STRIP PROGRES TARGET TANGGAL (RINGKAS & MUDAH DIBACA) ================= */
+.progress-strip-card {
+  background: var(--bg-card);
+  border: 1px solid #DBEAFE;
+  border-left: 5px solid var(--primary);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
 }
 
-.ct-header {
+.ps-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-.ct-title-box h3 {
-  font-size: 16.5px;
+.ps-title {
+  font-size: 14px;
   font-weight: 800;
   color: var(--text-dark);
 }
 
-.ct-title-box p {
-  font-size: 12.5px;
-  color: var(--text-muted);
-  margin-top: 2px;
+.ps-title span {
+  color: var(--primary);
 }
 
-.ct-status-pill {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-.ct-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.ct-metric-box {
-  background: #F8FAFC;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 13px 15px;
-}
-
-.ct-metric-box small {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.ct-metric-box strong {
-  display: block;
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--text-dark);
-}
-
-.ct-metric-box span {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-light);
-}
-
-.ct-progress-wrap {
-  background: #F8FAFC;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-}
-
-.ct-progress-labels {
+.ps-numbers {
   display: flex;
-  justify-content: space-between;
-  font-size: 12.5px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
 }
 
-.ct-progress-bar {
+.ps-item small {
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.ps-item strong {
+  color: var(--text-dark);
+  font-weight: 800;
+}
+
+.ps-pct-badge {
+  background: var(--primary-soft);
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ps-pct-badge.achieved {
+  background: var(--emerald-soft);
+  color: #047857;
+}
+
+.ps-bar-bg {
   width: 100%;
-  height: 12px;
+  height: 10px;
   background: #E2E8F0;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
-.ct-progress-fill {
+.ps-bar-fill {
   height: 100%;
-  border-radius: 8px;
-  transition: width 0.4s ease;
+  border-radius: 6px;
+  transition: width 0.35s ease;
 }
 
-/* ================= KARTU INDIKATOR UTAMA ================= */
+/* ================= 6 KARTU INDIKATOR UTAMA ================= */
 .kpi-six-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -579,7 +542,7 @@ body {
 
 .kpi-title {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -593,10 +556,35 @@ body {
 }
 
 .kpi-value {
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 800;
   color: var(--text-dark);
   letter-spacing: -0.4px;
+}
+
+/* Baris khusus untuk menampilkan Pcs & Nominal (Rp) secara sejajar di Kartu Cancel / Berhasil */
+.kpi-dual-box {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 10px;
+  background: #F8FAFC;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid #F1F5F9;
+}
+
+.kpi-dual-box small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.kpi-dual-box strong {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--text-dark);
 }
 
 .kpi-sub {
@@ -728,8 +716,8 @@ body {
 .panel-title { font-size: 16px; font-weight: 800; }
 .panel-subtitle { font-size: 12px; color: var(--text-muted); }
 
-.chart-box-lg { height: 300px; position: relative; }
-.chart-box-donut { height: 220px; position: relative; display: flex; align-items: center; justify-content: center; }
+.chart-box-lg { height: 290px; position: relative; }
+.chart-box-donut { height: 215px; position: relative; display: flex; align-items: center; justify-content: center; }
 
 .donut-center-info { position: absolute; text-align: center; pointer-events: none; }
 .donut-center-info strong { display: block; font-size: 20px; font-weight: 800; color: var(--text-dark); }
@@ -831,7 +819,6 @@ body {
 
 /* ================= RESPONSIVE ALL-DEVICE (MOBILE, IPAD, TABLET) ================= */
 @media (max-width: 1100px) {
-  .ct-metrics-grid { grid-template-columns: repeat(2, 1fr); }
   .kpi-six-grid { grid-template-columns: repeat(2, 1fr); }
   .charts-two-col { grid-template-columns: 1fr; }
   .fx-grid { grid-template-columns: repeat(2, 1fr); }
@@ -840,8 +827,8 @@ body {
 @media (max-width: 768px) {
   .top-header { padding: 10px 16px; height: auto; flex-wrap: wrap; gap: 10px; }
   .fx-badge { display: none; }
-  .sub-navbar, .filter-bar, .main-container { padding-left: 16px; padding-right: 16px; }
-  .filter-bar { position: static; }
-  .ct-metrics-grid, .regional-grid, .kpi-six-grid, .fx-grid, .reg-metrics { grid-template-columns: 1fr; }
+  .sub-navbar { top: 0; padding: 0 16px; }
+  .main-container { padding: 16px 16px 50px; }
+  .regional-grid, .kpi-six-grid, .fx-grid, .reg-metrics { grid-template-columns: 1fr; }
   .section-heading { font-size: 19px; }
 }

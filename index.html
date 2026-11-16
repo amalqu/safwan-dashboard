@@ -12,7 +12,7 @@
 </head>
 <body>
 
-  <!-- ================= GERBANG KEAMANAN: LOGIN & PIN ================= -->
+  <!-- ================= GERBANG LOGIN & PIN ================= -->
   <div id="securityGateOverlay" class="auth-overlay">
     <div class="auth-card">
       <div class="auth-brand">
@@ -44,7 +44,7 @@
           <small class="auth-hint">PIN Keamanan: 739482</small>
         </div>
 
-        <div id="authErrorMsg" class="auth-error hidden">Username, Password, atau PIN salah.</div>
+        <div id="authErrorMsg" class="auth-error hidden">Username, Password, atau PIN tidak sesuai.</div>
 
         <button type="submit" class="btn-auth-submit">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -83,7 +83,7 @@
       <div class="header-right">
         <div class="sync-badge">
           <span class="pulse-dot"></span>
-          <span id="lastSyncText">Data Terverifikasi</span>
+          <span id="lastSyncText">Realtime Aktif</span>
         </div>
 
         <button class="btn-header-action" id="btnSyncNow">
@@ -96,14 +96,14 @@
           <span>Refresh</span>
         </button>
 
-        <button class="icon-btn" id="btnOpenConfig" title="Pengaturan Kurs & Database">
+        <button class="icon-btn" id="btnOpenConfig" title="Pengaturan Kurs & Integrasi">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
         </button>
 
-        <button class="icon-btn danger-hover" id="btnLockSession" title="Keluar / Kunci">
+        <button class="icon-btn danger-hover" id="btnLockSession" title="Kunci Dashboard">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -112,7 +112,7 @@
       </div>
     </header>
 
-    <!-- NAVIGASI ENTITAS -->
+    <!-- NAVIGASI 7 TAB ENTITAS -->
     <nav class="sub-navbar">
       <div class="nav-tabs" id="mainNavTabs">
         <button class="nav-tab active" data-tab="holding">Keseluruhan Pakkawaru</button>
@@ -125,12 +125,14 @@
       </div>
     </nav>
 
-    <!-- BAR FILTER TANGGAL & PERIODE -->
-    <section class="filter-bar">
-      <div class="filter-bar-inner">
-        <div class="filter-group-left">
-          <div class="filter-item">
-            <label for="monthSelector">Pilih Bulan:</label>
+    <!-- KONTEN UTAMA -->
+    <main class="main-container">
+
+      <!-- PANEL KONTROL FILTER TANGGAL & BULAN (TIDAK MENUTUPI JUDUL SAAT SCROLL) -->
+      <section class="control-panel">
+        <div class="control-left">
+          <div class="control-group">
+            <label for="monthSelector">Periode Bulan</label>
             <select id="monthSelector" class="select-control">
               <option value="2026-11" selected>November 2026 (Realtime)</option>
               <option value="2026-10">Oktober 2026</option>
@@ -143,43 +145,42 @@
               <option value="2026-03">Maret 2026</option>
               <option value="2026-02">Februari 2026</option>
               <option value="2026-01">Januari 2026</option>
-              <option value="2026-ALL">Total Tahun 2026</option>
+              <option value="2026-ALL">Akumulasi Tahun 2026</option>
             </select>
           </div>
 
           <div class="preset-buttons" id="realtimeDatePresets">
-            <button class="chip-btn active" data-range="this_month">Semua Hari (1–13 Nov)</button>
-            <button class="chip-btn" data-range="10_days">1–10 Nov (10 Hari)</button>
+            <button class="chip-btn active" data-range="this_month" id="btnPresetMonthToDate">Bulan Berjalan (1–16 Nov)</button>
             <button class="chip-btn" data-range="last_7">7 Hari Terakhir</button>
-            <button class="chip-btn" data-range="custom">Custom Tanggal</button>
-          </div>
-
-          <div class="custom-date-box" id="customDateWrap">
-            <input type="date" id="filterStartDate" value="2026-11-01" min="2026-11-01" max="2026-11-30" />
-            <span>s/d</span>
-            <input type="date" id="filterEndDate" value="2026-11-13" min="2026-11-01" max="2026-11-30" />
+            <button class="chip-btn" data-range="10_days">1–10 Nov</button>
+            <button class="chip-btn" data-range="full_30">Full 30 Hari</button>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- KONTEN UTAMA -->
-    <main class="main-container">
+        <div class="control-right" id="customDateWrap">
+          <span class="date-label">Custom Tanggal:</span>
+          <div class="custom-date-box">
+            <input type="date" id="filterStartDate" value="2026-11-01" min="2026-11-01" max="2026-11-30" />
+            <span>s/d</span>
+            <input type="date" id="filterEndDate" value="2026-11-16" min="2026-11-01" max="2026-11-30" />
+          </div>
+        </div>
+      </section>
 
-      <!-- HEADER JUDUL HALAMAN & PILIHAN SUB-TOKO -->
+      <!-- BARIS JUDUL ENTITAS & SUB-FILTER TOKO -->
       <div class="section-top-bar">
         <div>
           <span class="section-tag" id="viewBadgeTag">LAPORAN KONSOLIDASI</span>
           <h1 class="section-heading" id="viewTitleHeading">Keseluruhan Pakkawaru Group</h1>
-          <p class="section-desc" id="viewSubtitleDesc">Ringkasan Target, Omset Tercapai, dan Proyeksi Akhir Bulan</p>
+          <p class="section-desc" id="viewSubtitleDesc">Ringkasan Target, Omset Tercapai, dan Estimasi Akhir Bulan</p>
         </div>
         <div class="sub-channel-pills hidden" id="channelSubPills"></div>
       </div>
 
-      <!-- FITUR BARU: PANEL PROGRES TARGET CUSTOM TANGGAL (MUDAH DIPAHAMI) -->
-      <section id="customDateTargetPanel" class="custom-target-banner"></section>
+      <!-- BARIS PROGRES TARGET TANGGAL YANG DIPILIH (RINGKAS, JELAS & TANPA TEKS SELISIH MINUS) -->
+      <section id="customDateProgressStrip" class="progress-strip-card"></section>
 
-      <!-- KARTU INDIKATOR UTAMA -->
+      <!-- 6 KARTU INDIKATOR UTAMA (MUDAH DIBACA SEKALI LIHAT) -->
       <section class="kpi-six-grid" id="primaryKpiGrid"></section>
 
       <!-- PANEL KONVERSI RINGGIT KE RUPIAH (KHUSUS SHOPEE MALAYSIA DI TAB SAFWAN) -->
@@ -193,8 +194,8 @@
         <div class="panel-card">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title" id="barChartHeading">Grafik Perbandingan Target vs Omset</h2>
-              <p class="panel-subtitle" id="barChartSub">Perbandingan langsung per entitas dalam Rupiah</p>
+              <h2 class="panel-title" id="barChartHeading">Grafik Perbandingan Target vs Omset Tercapai</h2>
+              <p class="panel-subtitle" id="barChartSub">Arahkan kursor pada batang grafik untuk melihat nominal detail</p>
             </div>
             <select id="chartViewMode" class="select-control-sm">
               <option value="custom_target">Target Tanggal Ini vs Omset Tercapai</option>
@@ -211,7 +212,7 @@
         <div class="panel-card">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title" id="donutChartHeading">Porsi Kontribusi Omset</h2>
+              <h2 class="panel-title" id="donutChartHeading">Proporsi Kontribusi Omset</h2>
               <p class="panel-subtitle" id="donutChartSub">Persentase capaian terhadap target</p>
             </div>
           </div>
@@ -219,19 +220,19 @@
             <canvas id="mainDonutCanvas"></canvas>
             <div class="donut-center-info">
               <strong id="donutCenterBig">0%</strong>
-              <span id="donutCenterSmall">Progres</span>
+              <span id="donutCenterSmall">Capaian</span>
             </div>
           </div>
           <div id="donutCustomLegend" class="donut-legend-list"></div>
         </div>
       </section>
 
-      <!-- TABEL RINGKASAN JELAS & RAPI -->
+      <!-- TABEL RINGKASAN -->
       <section class="panel-card table-panel">
         <div class="panel-head">
           <div>
             <h2 class="panel-title" id="summaryTableHeading">Tabel Ringkasan Kinerja</h2>
-            <p class="panel-subtitle" id="summaryTableSub">Klik pada tombol entitas untuk melihat rincian per toko</p>
+            <p class="panel-subtitle" id="summaryTableSub">Menampilkan Target, Omset Tercapai, Qty Berhasil, serta Return/Cancel dalam Pcs dan Nominal</p>
           </div>
         </div>
         <div class="table-scroll">
