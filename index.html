@@ -2,13 +2,13 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Pakkawaru Group — Executive Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
 
@@ -75,8 +75,8 @@
           </div>
         </div>
 
-        <div class="fx-badge" id="fxRateBadge">
-          <span id="fxRateText">Kurs: 1 MYR = Rp3.580</span>
+        <div class="fx-badge hidden" id="fxRateBadge">
+          <span id="fxRateText">Kurs Shopee Malaysia: 1 MYR = Rp3.580</span>
         </div>
       </div>
 
@@ -93,7 +93,7 @@
             <path d="M3 22v-6h6"></path>
             <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
           </svg>
-          <span>Refresh</span>
+          <span class="btn-text-hide-sm">Refresh</span>
         </button>
 
         <button class="icon-btn" id="btnOpenConfig" title="Pengaturan Kurs & Integrasi">
@@ -128,7 +128,7 @@
     <!-- KONTEN UTAMA -->
     <main class="main-container">
 
-      <!-- PANEL KONTROL FILTER TANGGAL & BULAN (TIDAK MENUTUPI JUDUL SAAT SCROLL) -->
+      <!-- PANEL KONTROL FILTER TANGGAL & BULAN -->
       <section class="control-panel">
         <div class="control-left">
           <div class="control-group">
@@ -149,12 +149,7 @@
             </select>
           </div>
 
-          <div class="preset-buttons" id="realtimeDatePresets">
-            <button class="chip-btn active" data-range="this_month" id="btnPresetMonthToDate">Bulan Berjalan (1–16 Nov)</button>
-            <button class="chip-btn" data-range="last_7">7 Hari Terakhir</button>
-            <button class="chip-btn" data-range="10_days">1–10 Nov</button>
-            <button class="chip-btn" data-range="full_30">Full 30 Hari</button>
-          </div>
+          <div class="preset-buttons" id="realtimeDatePresets"></div>
         </div>
 
         <div class="control-right" id="customDateWrap">
@@ -162,32 +157,41 @@
           <div class="custom-date-box">
             <input type="date" id="filterStartDate" value="2026-11-01" min="2026-11-01" max="2026-11-30" />
             <span>s/d</span>
-            <input type="date" id="filterEndDate" value="2026-11-16" min="2026-11-01" max="2026-11-30" />
+            <input type="date" id="filterEndDate" value="2026-11-17" min="2026-11-01" max="2026-11-30" />
           </div>
         </div>
       </section>
 
-      <!-- BARIS JUDUL ENTITAS & SUB-FILTER TOKO -->
+      <!-- BARIS JUDUL ENTITAS & SUB-FILTER WILAYAH / TOKO -->
       <div class="section-top-bar">
         <div>
           <span class="section-tag" id="viewBadgeTag">LAPORAN KONSOLIDASI</span>
           <h1 class="section-heading" id="viewTitleHeading">Keseluruhan Pakkawaru Group</h1>
           <p class="section-desc" id="viewSubtitleDesc">Ringkasan Target, Omset Tercapai, dan Estimasi Akhir Bulan</p>
         </div>
+
+        <!-- TOMBOL TAB MODE DAERAH (MUNCUL DI DASHBOARD UTAMA) -->
+        <div class="region-mode-tabs" id="holdingRegionTabs">
+          <button class="region-tab-btn active" data-region="all">Semua Daerah (Nasional)</button>
+          <button class="region-tab-btn" data-region="Bandung">Detail Daerah Bandung</button>
+          <button class="region-tab-btn" data-region="Gorontalo">Detail Daerah Gorontalo</button>
+        </div>
+
+        <!-- TOMBOL SUB-TOKO (MUNCUL DI PT SAFWAN & PT BQY ANSAN) -->
         <div class="sub-channel-pills hidden" id="channelSubPills"></div>
       </div>
 
-      <!-- BARIS PROGRES TARGET TANGGAL YANG DIPILIH (RINGKAS, JELAS & TANPA TEKS SELISIH MINUS) -->
-      <section id="customDateProgressStrip" class="progress-strip-card"></section>
+      <!-- HERO CARD PROGRES TARGET CUSTOM TANGGAL (KONTRAS TINGGI & SANGAT JELAS) -->
+      <section id="customDateProgressStrip" class="hero-target-card"></section>
 
-      <!-- 6 KARTU INDIKATOR UTAMA (MUDAH DIBACA SEKALI LIHAT) -->
+      <!-- 6 KARTU INDIKATOR UTAMA -->
       <section class="kpi-six-grid" id="primaryKpiGrid"></section>
 
-      <!-- PANEL KONVERSI RINGGIT KE RUPIAH (KHUSUS SHOPEE MALAYSIA DI TAB SAFWAN) -->
+      <!-- PANEL KONVERSI RINGGIT KE RUPIAH (HANYA MUNCUL SAAT KLIK SHOPEE MALAYSIA) -->
       <section id="malaysiaFxBanner" class="fx-conversion-panel hidden"></section>
 
-      <!-- PENCAPAIAN PER DAERAH: BANDUNG & GORONTALO (KHUSUS TAB UTAMA) -->
-      <section id="regionalCompareSection" class="regional-grid"></section>
+      <!-- DASHBOARD PER DAERAH: BANDUNG & GORONTALO (UKURAN BESAR & BISA DIKLIK DETAIL) -->
+      <section id="regionalCompareSection" class="regional-Command-section"></section>
 
       <!-- GRAFIK VISUAL -->
       <section class="charts-two-col">
@@ -195,12 +199,12 @@
           <div class="panel-head">
             <div>
               <h2 class="panel-title" id="barChartHeading">Grafik Perbandingan Target vs Omset Tercapai</h2>
-              <p class="panel-subtitle" id="barChartSub">Arahkan kursor pada batang grafik untuk melihat nominal detail</p>
+              <p class="panel-subtitle" id="barChartSub">Ketuk atau arahkan kursor pada batang grafik untuk melihat nominal detail</p>
             </div>
             <select id="chartViewMode" class="select-control-sm">
-              <option value="custom_target">Target Tanggal Ini vs Omset Tercapai</option>
-              <option value="monthly_target">Target Bulanan vs Omset Tercapai</option>
-              <option value="real_vs_estimasi">Omset Tercapai vs Estimasi Akhir Bulan</option>
+              <option value="custom_target">Target Custom Tanggal vs Omset</option>
+              <option value="monthly_target">Target Bulanan vs Omset</option>
+              <option value="real_vs_estimasi">Omset vs Estimasi Akhir Bulan</option>
               <option value="monthly_trend">Tren Bulanan (Jan - Nov 2026)</option>
             </select>
           </div>
@@ -274,6 +278,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
