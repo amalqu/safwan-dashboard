@@ -44,6 +44,9 @@ const STATE = {
   holdingRegion: 'all',       // all | Bandung | Gorontalo
   subChannel: 'all',          // all | tiktokSafwan | shopeeSafwan | shopeeMalaysia | dst.
   selectedMonth: todayJakartaIso().slice(0, 7),
+  lastMonth: todayJakartaIso().slice(0, 7),   // bulan terakhir yang dilihat sebelum pindah ke Setahun
+  filtersOpen: false,         // panel filter di ponsel
+  share: null,                // bahan teks 'Bagikan ringkasan'
   rangePreset: 'this_month',
   startDate: todayJakartaIso().slice(0, 7) + '-01',
   endDate: todayJakartaIso(),
@@ -116,6 +119,7 @@ function ingestData(data) {
 
   const validMonths = [STATE.currentMonth, ...Object.keys(MONTHLY_HISTORY_2026), STATE.allKey];
   if (!validMonths.includes(STATE.selectedMonth)) STATE.selectedMonth = STATE.currentMonth;
+  if (!validMonths.includes(STATE.lastMonth) || STATE.lastMonth === STATE.allKey) STATE.lastMonth = STATE.currentMonth;
   buildMonthSelector();
   applyPreset(STATE.rangePreset, true);
 }
@@ -168,9 +172,8 @@ function buildMonthSelector() {
   Object.keys(MONTHLY_HISTORY_2026).sort().reverse().forEach(k => {
     opts.push(`<option value="${k}">${MONTHLY_HISTORY_2026[k].label}</option>`);
   });
-  opts.push(`<option value="${STATE.allKey}">Akumulasi Tahun ${STATE.currentMonth.slice(0, 4)}</option>`);
   sel.innerHTML = opts.join('');
-  sel.value = STATE.selectedMonth;
+  sel.value = isYear() ? (STATE.lastMonth || STATE.currentMonth) : STATE.selectedMonth;
 }
 
 function goldVal(raw) {
@@ -195,6 +198,74 @@ function monthFullReport(entityKey) {
   return withRange(monthStartIso(), STATE.latestDate, () => computeRealtimeNovemberEntity(entityKey, days));
 }
 
+
+
+/* ======================= MODE SETAHUN ======================= */
+function isYear() { return STATE.selectedMonth === STATE.allKey; }
+
+function setScope(scope) {
+  if (scope === 'year') {
+    if (!isYear()) STATE.lastMonth = STATE.selectedMonth;
+    STATE.selectedMonth = STATE.allKey;
+  } else if (isYear()) {
+    STATE.selectedMonth = STATE.lastMonth && STATE.lastMonth !== STATE.allKey ? STATE.lastMonth : STATE.currentMonth;
+  }
+  buildMonthSelector();
+}
+
+function daysInMonthOf(ym) { return new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0).getDate(); }
+
+/**
+ * Data 12 bulan untuk daftar entitas.
+ *  - bulan lewat   : total akhir dari spreadsheet "Pencapaian Bulanan" (emas lewat goldVal)
+ *  - bulan berjalan: dihitung langsung dari data penjualan (target = Target Omset)
+ *  - bulan depan   : hanya target bila sudah diisi di spreadsheet
+ */
+function buildYearData(entityKeys) {
+  const year = STATE.currentMonth.slice(0, 4);
+  const monthly = (DATA && DATA.monthly) || {};
+  const live = {};
+  entityKeys.forEach(ek => { live[ek] = monthFullReport(ek); });
+  const months = [];
+  for (let i = 1; i <= 12; i++) {
+    const key = `${year}-${String(i).padStart(2, '0')}`;
+    const status = key < STATE.currentMonth ? 'past' : key === STATE.currentMonth ? 'current' : 'future';
+    const m = { key, idx: i, name: MONTH_NAMES[i - 1], short: MONTH_NAMES[i - 1].slice(0, 3), status, target: 0, omset: null, raw: 0, targetToDate: 0, has: false, by: {} };
+    entityKeys.forEach(ek => {
+      const meta = ENTITY_META[ek];
+      let t = 0, o = null, raw = 0, ttd = 0;
+      if (status === 'current') {
+        const r = live[ek];
+        t = r.targetBulanan; o = r.validOmset; raw = meta.isGold ? r.rawBeforeDiv3 : r.validOmset; ttd = r.targetCustomTanggal;
+      } else if (monthly[key] && monthly[key][ek]) {
+        t = monthly[key][ek][0] || 0;
+        if (status === 'past') { raw = monthly[key][ek][1] || 0; o = meta.isGold ? goldVal(raw) : raw; ttd = t; }
+      }
+      m.by[ek] = { target: t, omset: o, raw, targetToDate: ttd };
+      m.target += t; m.raw += raw; m.targetToDate += ttd;
+      if (o !== null) m.omset = (m.omset || 0) + o;
+    });
+    m.has = status === 'current' || (status === 'past' && m.omset !== null && (m.omset > 0 || m.target > 0)) || (status === 'future' && m.target > 0);
+    m.pct = m.omset !== null && m.target > 0 ? pctOf(m.omset, m.target) : null;
+    months.push(m);
+  }
+  const done = months.filter(m => m.status === 'past' && m.has);
+  const cur = months.find(m => m.status === 'current');
+  const sum = (arr, f) => arr.reduce((a, b) => a + f(b), 0);
+  const omsetYtd = sum(months.filter(m => m.status !== 'future'), m => m.omset || 0);
+  const targetYear = sum(months, m => m.target);
+  const targetToDate = sum(months.filter(m => m.status !== 'future'), m => m.targetToDate);
+  const hit = done.filter(m => m.pct >= 100).length;
+  const near = done.filter(m => m.pct >= 70 && m.pct < 100).length;
+  const byOmset = done.slice().sort((a, b) => b.omset - a.omset);
+  const byPct = done.filter(m => m.pct !== null).slice().sort((a, b) => b.pct - a.pct);
+  return {
+    months, done, cur, omsetYtd, targetYear, targetToDate, hit, near,
+    avg: done.length ? sum(done, m => m.omset) / done.length : 0,
+    best: byOmset[0] || null, low: byOmset[byOmset.length - 1] || null, topPct: byPct[0] || null,
+    futureWithTarget: months.filter(m => m.status === 'future' && m.target > 0).length
+  };
+}
 function formatIDR(val) {
   const n = Math.round(Number(val) || 0);
   return (n < 0 ? '-Rp' : 'Rp') + Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -456,46 +527,90 @@ function statusChip(p) {
 }
 
 /* ------------------------------ HERO ------------------------------------- */
+/* Status untuk periode yang masih berjalan: dibandingkan dengan jalur target (hari berjalan x target harian) */
+function paceChip(p) {
+  if (p >= 100) return `<span class="chip chip-good">${svgIcon('check', 15)}Sesuai jalur target</span>`;
+  if (p >= 70) return `<span class="chip chip-warn">${svgIcon('minus', 15)}Agak tertinggal</span>`;
+  return `<span class="chip chip-bad">${svgIcon('alert', 15)}Tertinggal dari target</span>`;
+}
+
+/* Konteks bulan yang sedang dilihat (nama, hari berjalan, apakah rentang tanggal masih bawaan) */
+function monthCtx(isCurrent) {
+  const ym = isCurrent ? STATE.currentMonth : STATE.selectedMonth;
+  const mi = Number(ym.slice(5, 7)) - 1;
+  return {
+    monthName: MONTH_NAMES[mi], monthLabel: `${MONTH_NAMES[mi]} ${ym.slice(0, 4)}`,
+    daysElapsed: isCurrent ? Math.max(1, Number(STATE.latestDate.slice(8, 10))) : daysInMonthOf(ym),
+    daysInMonth: daysInMonthOf(ym),
+    isDefaultRange: STATE.startDate === monthStartIso() && STATE.endDate === STATE.latestDate
+  };
+}
+
+/**
+ * Sorotan utama = omset bulan itu dibanding target bulan itu.
+ * Target rentang tanggal (pilihan pengguna) tetap tampil sebagai baris tambahan.
+ */
 function renderHero(o) {
   const el = $id('customDateProgressStrip');
-  const pct = pctOf(o.omset, o.targetCustom);
-  const max = Math.max(o.targetBulanan, o.omset, o.estimasi || 0, o.targetCustom, 1);
+  const target = o.targetBulanan, om = o.monthOmset;
+  const pctM = pctOf(om, target);
+  const sisa = target - om;
+  const daysLeft = o.isCurrent ? Math.max(0, o.daysInMonth - o.daysElapsed) : 0;
+  const paceTarget = o.isCurrent ? o.targetHarian * o.daysElapsed : target;
+  const pacePct = pctOf(om, paceTarget);
+  const est = o.isCurrent ? o.estimasi : om;
+  const max = Math.max(target, om, est, paceTarget, 1);
   const w = v => Math.max(0, Math.min(100, (v / max) * 100));
-  const title = o.isCurrent
-    ? `${fmtPct(pct)} dari target ${o.days} hari sudah tercapai`
-    : `Capaian ${fmtPct(pct)} dari target ${o.periodLabel}`;
-  const sub = o.isCurrent
-    ? `<strong>${o.scope}</strong> mencatat omset ${formatIDR(o.omset)} dari target ${formatIDR(o.targetCustom)} (${o.days} hari × ${formatIDR(o.targetHarian)} per hari).`
-    : `<strong>${o.scope}</strong> mencatat omset ${formatIDR(o.omset)} dari target ${formatIDR(o.targetCustom)} pada ${o.periodLabel}.`;
+  const chip = o.isCurrent ? paceChip(pacePct) : statusChip(pctM);
+
+  const title = pctM >= 100 ? `Target ${o.monthName} sudah tercapai` : `${fmtPct(pctM)} dari target ${o.monthName} sudah tercapai`;
+  let sub = `<strong>${o.scope}</strong> mencatat omset ${formatIDR(om)} dari target bulanan ${formatIDR(target)}. `;
+  if (sisa <= 0) sub += `Sudah melewati target sebesar ${formatIDR(-sisa)}.`;
+  else if (o.isCurrent && daysLeft > 0) sub += `Sisa ${formatIDR(sisa)}, atau sekitar ${formatCompact(sisa / daysLeft)} per hari untuk ${daysLeft} hari yang tersisa.`;
+  else sub += `Kurang ${formatIDR(sisa)} dari target.`;
+  if (o.note) sub += ` <span class="hero-note">${o.note}</span>`;
 
   const items = [];
-  items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-fill"></i>Omset tercapai</span><span class="lg-val">${formatIDR(o.omset)}</span><span class="lg-note">Rata-rata ${formatIDR(o.omset / Math.max(1, o.days))} per hari</span></div>`);
+  items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-fill"></i>Omset ${o.monthName}</span><span class="lg-val">${formatIDR(om)}</span><span class="lg-note">Rata-rata ${formatIDR(om / Math.max(1, o.daysElapsed))} per hari</span></div>`);
+  items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-end"></i>Target bulanan</span><span class="lg-val">${formatIDR(target)}</span><span class="lg-note">${sisa > 0 ? 'Sisa ' + formatIDR(sisa) : 'Lebih ' + formatIDR(-sisa)}</span></div>`);
   if (o.isCurrent) {
-    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-tick"></i>Target ${o.days} hari</span><span class="lg-val">${formatIDR(o.targetCustom)}</span><span class="lg-note">${o.days} hari × ${formatCompact(o.targetHarian)}</span></div>`);
-    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-est"></i>Perkiraan akhir bulan</span><span class="lg-val">${formatIDR(o.estimasi)}</span><span class="lg-note">${fmtPct(pctOf(o.estimasi, o.targetBulanan))} dari target bulan</span></div>`);
+    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-tick"></i>Jalur target ${o.daysElapsed} hari</span><span class="lg-val">${formatIDR(paceTarget)}</span><span class="lg-note">Omset ${fmtPct(pacePct)} dari jalur</span></div>`);
+    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-est"></i>Perkiraan akhir bulan</span><span class="lg-val">${formatIDR(est)}</span><span class="lg-note">${fmtPct(pctOf(est, target))} dari target bulan</span></div>`);
   } else {
-    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-tick"></i>Target periode</span><span class="lg-val">${formatIDR(o.targetCustom)}</span><span class="lg-note">${o.periodLabel}</span></div>`);
+    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-tick"></i>Selisih dengan target</span><span class="lg-val ${sisa > 0 ? 't-bad' : 't-good'}">${sisa > 0 ? '-' : '+'}${formatIDR(Math.abs(sisa))}</span><span class="lg-note">${sisa > 0 ? 'Belum tercapai' : 'Melampaui target'}</span></div>`);
+    items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-est"></i>Rata-rata per hari</span><span class="lg-val">${formatIDR(om / Math.max(1, o.daysInMonth))}</span><span class="lg-note">${o.daysInMonth} hari</span></div>`);
   }
-  items.push(`<div class="lg"><span class="lg-name"><i class="sw sw-end"></i>Target bulanan</span><span class="lg-val">${formatIDR(o.targetBulanan)}</span><span class="lg-note">Omset baru ${fmtPct(pctOf(o.omset, o.targetBulanan))} dari target bulan</span></div>`);
+
+  let range = '';
+  if (o.isCurrent && o.range && !o.range.isDefault) {
+    const rp = pctOf(o.range.omset, o.range.target);
+    range = `<div class="hero-range">
+      <div><span class="hr-label">Rentang tanggal dipilih</span><strong>${o.range.label}</strong></div>
+      <div><span class="hr-label">Omset rentang ini</span><strong>${formatIDR(o.range.omset)}</strong></div>
+      <div><span class="hr-label">Target ${o.range.days} hari</span><strong>${formatIDR(o.range.target)}</strong></div>
+      <div><span class="hr-label">Capaian rentang</span><strong class="${rp >= 100 ? 't-good' : rp >= 70 ? 't-warn' : 't-bad'}">${fmtPct(rp)}</strong></div>
+    </div>`;
+  }
 
   el.innerHTML = `
     <div class="hero-top">
       <div>
-        ${statusChip(pct)}
+        ${chip}
         <h2>${title}</h2>
         <p class="hero-sub">${sub}</p>
       </div>
-      <div class="hero-pct"><strong>${fmtPct(pct)}</strong><span>${o.isCurrent ? 'dari target ' + o.days + ' hari' : 'dari target periode'}</span></div>
+      <div class="hero-pct"><strong>${fmtPct(pctM)}</strong><span>dari target ${o.monthLabel}</span></div>
     </div>
-    <div class="track-wrap" role="img" aria-label="Omset ${formatIDR(o.omset)}, target ${formatIDR(o.targetCustom)}, target bulanan ${formatIDR(o.targetBulanan)}">
+    <div class="track-wrap" role="img" aria-label="Omset ${formatIDR(om)}, target bulanan ${formatIDR(target)}${o.isCurrent ? ', perkiraan akhir bulan ' + formatIDR(est) : ''}">
       <div class="track">
-        <div class="track-fill" style="width:${w(o.omset)}%"></div>
-        ${o.isCurrent ? `<div class="track-tick" style="left:${w(o.targetCustom)}%"></div>` : ''}
-        ${o.isCurrent ? `<div class="track-est" style="left:${w(o.estimasi)}%"></div>` : ''}
-        <div class="track-end"></div>
+        <div class="track-fill" style="width:${w(om)}%"></div>
+        ${o.isCurrent ? `<div class="track-tick" style="left:${w(paceTarget)}%"></div>` : ''}
+        ${o.isCurrent ? `<div class="track-est" style="left:${w(est)}%"></div>` : ''}
+        <div class="track-end" style="left:${w(target)}%"></div>
       </div>
     </div>
-    <div class="legend4">${items.join('')}</div>`;
+    <div class="legend4">${items.join('')}</div>
+    ${range}`;
 }
 
 /* ------------------------------ KARTU ANGKA ------------------------------ */
@@ -514,14 +629,16 @@ function renderKpis(cards) {
   const grid = $id('primaryKpiGrid');
   grid.className = 'kpi-grid' + (cards.length === 4 ? ' cols-4' : '');
   grid.innerHTML = cards.map(kpiCard).join('');
+  if (typeof bindKpiDots === 'function') bindKpiDots();
 }
 
 /* Kartu bersama untuk tampilan keseluruhan & per entitas */
 function buildKpiCards(m) {
   const cards = [];
+  const mo = m.monthOmset !== undefined ? m.monthOmset : m.omset;
   cards.push({
-    icon: 'target', title: 'Target bulanan', value: formatIDR(m.targetBulanan), pct: pctOf(m.omset, m.targetBulanan),
-    rows: [['Capaian terhadap bulan', fmtPct(pctOf(m.omset, m.targetBulanan))], [m.countLabel, m.countValue]]
+    icon: 'target', title: `Target ${m.monthName || 'bulanan'}`, value: formatIDR(m.targetBulanan), pct: pctOf(mo, m.targetBulanan),
+    rows: [[`Omset ${m.monthName || 'bulan ini'}`, formatIDR(mo)], ['Capaian terhadap bulan', fmtPct(pctOf(mo, m.targetBulanan))]]
   });
   cards.push({
     icon: 'calendar', title: m.isCurrent ? `Target ${m.days} hari` : 'Target periode', value: formatIDR(m.targetCustom), pct: pctOf(m.omset, m.targetCustom),
@@ -530,13 +647,13 @@ function buildKpiCards(m) {
       : [['Target harian', formatIDR(m.targetHarian)], ['Periode', m.periodLabel]]
   });
   cards.push({
-    icon: 'wallet', title: 'Omset tercapai', value: m.omsetValue, pct: pctOf(m.omset, m.targetCustom),
+    icon: 'wallet', title: m.isCurrent ? `Omset ${m.days} hari` : 'Omset tercapai', value: m.omsetValue, pct: pctOf(m.omset, m.targetCustom),
     rows: m.omsetRows
   });
   if (m.isCurrent) {
     cards.push({
       icon: 'trend', title: 'Perkiraan akhir bulan', value: formatIDR(m.estimasi), pct: pctOf(m.estimasi, m.targetBulanan),
-      rows: [['Rata-rata omset per hari', formatIDR(m.omset / Math.max(1, m.days))], ['Dari target bulan', fmtPct(pctOf(m.estimasi, m.targetBulanan))]]
+      rows: [['Rata-rata omset per hari', formatIDR(mo / Math.max(1, m.daysElapsed || m.days))], ['Dari target bulan', fmtPct(pctOf(m.estimasi, m.targetBulanan))]]
     });
     cards.push({ icon: 'bag', title: m.ordersTitle, value: m.ordersValue, pct: m.validPct, rows: m.ordersRows });
     cards.push({ icon: 'undo', rose: true, title: 'Return dan cancel', value: m.cancelValue, pct: m.cancelPct, rows: m.cancelRows });
@@ -555,25 +672,56 @@ function renderSkeleton() {
 }
 
 function renderApp() {
+  const year = isYear();
   const days = getActiveDaysCount();
-  const isCurrent = STATE.selectedMonth === STATE.currentMonth;
+  const isCurrent = !year && STATE.selectedMonth === STATE.currentMonth;
   updateGoldToggleUI();
   renderFreshness();
 
-  const isMy = STATE.activeTab === 'safwan' && STATE.subChannel === 'shopeeMalaysia';
+  const isMy = !year && STATE.activeTab === 'safwan' && STATE.subChannel === 'shopeeMalaysia';
   const fx = $id('fxRateBadge');
   if (fx) {
     fx.classList.toggle('hidden', !isMy);
     $id('fxRateText').textContent = `Kurs: 1 MYR = ${formatIDR(STATE.myrRate)}`;
   }
-  $id('realtimeDatePresets').closest('#customDateWrap').classList.toggle('hidden', !isCurrent);
-  $id('goldToggleWrap').classList.toggle('hidden', !['holding', 'sjp', 'ppm'].includes(STATE.activeTab) || (STATE.activeTab === 'holding' && STATE.holdingRegion === 'Bandung'));
+  const goldVisible = ['holding', 'sjp', 'ppm'].includes(STATE.activeTab) && !(STATE.activeTab === 'holding' && STATE.holdingRegion === 'Bandung');
+  $id('customDateWrap').classList.toggle('hidden', !isCurrent);
+  $id('monthFilterBlock').classList.toggle('hidden', year);
+  $id('goldToggleWrap').classList.toggle('hidden', !goldVisible);
+  $id('filtersBox').classList.toggle('hidden', year && !goldVisible);
+  $id('chartViewMode').classList.toggle('hidden', year);
   $id('holdingRegionTabs').classList.toggle('hidden', STATE.activeTab !== 'holding');
+  $id('yearSection').classList.add('hidden');
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === STATE.activeTab));
+  const dt = document.querySelector('.data-table'); if (dt) dt.classList.toggle('yr-table', year);
+  updateScopeUI();
+  updateFiltersSummary(year, isCurrent, goldVisible);
 
   if (!DATA) { renderSkeleton(); return; }
-  if (STATE.activeTab === 'holding') renderHoldingView(days, isCurrent);
+  if (year) renderYearView();
+  else if (STATE.activeTab === 'holding') renderHoldingView(days, isCurrent);
   else renderSingleEntityView(STATE.activeTab, days, isCurrent);
+}
+
+function updateScopeUI() {
+  const yr = STATE.currentMonth.slice(0, 4);
+  const b = document.querySelector('#viewScope [data-scope="year"]');
+  if (b) b.textContent = `Setahun ${yr}`;
+  document.querySelectorAll('#viewScope .seg-btn').forEach(x => x.classList.toggle('active', (x.dataset.scope === 'year') === isYear()));
+}
+
+function updateFiltersSummary(year, isCurrent, goldVisible) {
+  const el = $id('filtersSummary');
+  if (!el) return;
+  const parts = [];
+  if (year) parts.push(`Setahun ${STATE.currentMonth.slice(0, 4)}`);
+  else {
+    const mi = Number(STATE.selectedMonth.slice(5, 7)) - 1;
+    parts.push(`${MONTH_NAMES[mi]} ${STATE.selectedMonth.slice(0, 4)}`);
+    if (isCurrent) parts.push(formatReadableRange().replace(/ \d{4} /, ' ').replace('–', 's.d.'));
+  }
+  if (goldVisible) parts.push(`Emas ${goldTag()}`);
+  el.textContent = parts.join(' · ');
 }
 
 /* ------------------------------ KESELURUHAN ------------------------------ */
@@ -590,6 +738,10 @@ function renderHoldingView(days, isCurrent) {
     omset: sum(r => r.validOmset), est: sum(r => r.estimasiBulan), vq: sum(r => r.validQty), cq: sum(r => r.cancelQty), co: sum(r => r.cancelOmset)
   };
   const cancelPct = pctOf(t.co, t.omset + t.co);
+  const mc = monthCtx(isCurrent);
+  const mfull = isCurrent ? reports.map(r => monthFullReport(r.key)) : null;
+  const monthOmset = isCurrent ? mfull.reduce((a, b) => a + b.validOmset, 0) : t.omset;
+  const monthEst = isCurrent ? mfull.reduce((a, b) => a + b.estimasiBulan, 0) : t.est;
   const ecom = reports.filter(r => r.hasQty).reduce((a, b) => a + b.validOmset, 0);
   const periodLabel = formatReadableRange();
 
@@ -601,10 +753,12 @@ function renderHoldingView(days, isCurrent) {
   $id('regionalCompareSection').classList.remove('hidden');
   document.querySelectorAll('#holdingRegionTabs .region-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.region === STATE.holdingRegion));
 
-  renderHero({ scope: scopeLabel, targetHarian: t.harian, targetCustom: t.custom, targetBulanan: t.bulan, omset: t.omset, estimasi: t.est, days, isCurrent, periodLabel });
+  renderHero({ scope: scopeLabel, isCurrent, monthName: mc.monthName, monthLabel: mc.monthLabel, monthOmset, targetBulanan: t.bulan, targetHarian: t.harian, estimasi: monthEst,
+    daysElapsed: mc.daysElapsed, daysInMonth: mc.daysInMonth, range: { omset: t.omset, target: t.custom, days, label: periodLabel, isDefault: mc.isDefaultRange } });
 
   renderKpis(buildKpiCards({
-    isCurrent, days, periodLabel, targetBulanan: t.bulan, targetHarian: t.harian, targetCustom: t.custom, omset: t.omset, estimasi: t.est,
+    isCurrent, days, periodLabel, targetBulanan: t.bulan, targetHarian: t.harian, targetCustom: t.custom, omset: t.omset, estimasi: monthEst,
+    monthOmset, monthName: mc.monthName, daysElapsed: mc.daysElapsed,
     countLabel: 'Jumlah entitas', countValue: reports.length,
     omsetValue: formatIDR(t.omset),
     omsetRows: [[isCurrent ? `Target ${days} hari` : 'Target periode', formatCompact(t.custom)], ['Tercapai', fmtPct(pctOf(t.omset, t.custom))]],
@@ -613,6 +767,17 @@ function renderHoldingView(days, isCurrent) {
     cancelValue: formatIDR(t.co), cancelPct,
     cancelRows: [['Jumlah cancel atau RTS', `${fmtInt(t.cq)} pcs`], ['Dari total penjualan', fmtPct(cancelPct)]]
   }));
+
+  const shEst = isCurrent ? `Perkiraan akhir bulan: ${formatIDR(monthEst)} (${fmtPct(pctOf(monthEst, t.bulan))} dari target)` : null;
+  STATE.share = {
+    title: `${STATE.holdingRegion === 'all' ? 'Pakkawaru Group' : scopeLabel} - ${mc.monthLabel}`,
+    head: [
+      `Omset ${mc.monthName}: ${formatIDR(monthOmset)} (${fmtPct(pctOf(monthOmset, t.bulan))} dari target bulan ${formatIDR(t.bulan)})`,
+      ...(isCurrent ? [`Sisa target: ${formatIDR(Math.max(0, t.bulan - monthOmset))}`, shEst] : [])
+    ],
+    rows: reports.map((r, i) => { const om = isCurrent ? mfull[i].validOmset : r.validOmset; return [r.short, formatIDR(om), `${fmtPct(pctOf(om, r.targetBulanan), 0)} dari target`]; }),
+    gold: reports.some(r => r.isGold)
+  };
 
   /* Kartu daerah */
   const regionCard = (name, list, focusKey, isGoldRegion) => {
@@ -679,7 +844,11 @@ function renderSingleEntityView(entityKey, days, isCurrent) {
   $id('regionalCompareSection').classList.add('hidden');
   $id('regionalCompareSection').innerHTML = '';
 
-  renderHero({ scope: rep.name, targetHarian: rep.targetHarian, targetCustom: rep.targetCustomTanggal, targetBulanan: rep.targetBulanan, omset: full.validOmset, estimasi: rep.estimasiBulan, days, isCurrent, periodLabel });
+  const mc = monthCtx(isCurrent);
+  const mf = isCurrent ? monthFullReport(entityKey) : rep;
+  const subNote = isCurrent && STATE.subChannel !== 'all' && chName ? `Angka hanya dari ${chName}, sedangkan targetnya adalah target seluruh entitas.` : '';
+  renderHero({ scope: STATE.subChannel === 'all' || !chName ? rep.name : `${rep.name} (${chName})`, isCurrent, monthName: mc.monthName, monthLabel: mc.monthLabel, monthOmset: mf.validOmset, targetBulanan: rep.targetBulanan, targetHarian: rep.targetHarian, estimasi: mf.estimasiBulan,
+    daysElapsed: mc.daysElapsed, daysInMonth: mc.daysInMonth, note: subNote, range: { omset: full.validOmset, target: rep.targetCustomTanggal, days, label: periodLabel, isDefault: mc.isDefaultRange } });
 
   /* pilihan toko */
   const pills = $id('channelSubPills');
@@ -716,7 +885,8 @@ function renderSingleEntityView(entityKey, days, isCurrent) {
   }
   const cancelRate = rep.cancelRatePct;
   renderKpis(buildKpiCards({
-    isCurrent, days, periodLabel, targetBulanan: rep.targetBulanan, targetHarian: rep.targetHarian, targetCustom: rep.targetCustomTanggal, omset: rep.validOmset, estimasi: rep.estimasiBulan,
+    isCurrent, days, periodLabel, targetBulanan: rep.targetBulanan, targetHarian: rep.targetHarian, targetCustom: rep.targetCustomTanggal, omset: rep.validOmset, estimasi: mf.estimasiBulan,
+    monthOmset: mf.validOmset, monthName: mc.monthName, daysElapsed: mc.daysElapsed,
     countLabel: 'Entitas', countValue: rep.short,
     omsetValue: formatIDR(rep.validOmset), omsetRows,
     ordersTitle: rep.isGold ? 'Penjualan emas' : (rep.hasQty ? 'Pesanan berhasil' : 'Transaksi tercatat'),
@@ -729,6 +899,16 @@ function renderSingleEntityView(entityKey, days, isCurrent) {
     cancelPct: cancelRate,
     cancelRows: [['Jumlah cancel atau RTS', `${fmtInt(rep.cancelQty)} pcs`], ['Dari total penjualan', fmtPct(cancelRate)]]
   }));
+
+  STATE.share = {
+    title: `${rep.short} - ${mc.monthLabel}`,
+    head: [
+      `Omset ${mc.monthName}: ${formatIDR(mf.validOmset)} (${fmtPct(pctOf(mf.validOmset, rep.targetBulanan))} dari target bulan ${formatIDR(rep.targetBulanan)})`,
+      ...(isCurrent ? [`Sisa target: ${formatIDR(Math.max(0, rep.targetBulanan - mf.validOmset))}`, `Perkiraan akhir bulan: ${formatIDR(mf.estimasiBulan)} (${fmtPct(pctOf(mf.estimasiBulan, rep.targetBulanan))} dari target)`] : [])
+    ],
+    rows: isCurrent && mf.channels && mf.channels.length ? mf.channels.map(c => [c.name, formatIDR(c.validOmset), '']) : [],
+    gold: rep.isGold
+  };
 
   renderChartsForSingleEntity(entityKey, rep, days);
   renderTableForSingleEntity(entityKey, rep, days);
@@ -851,7 +1031,7 @@ function drawBarChart(labels, s1, s2, l1, l2) {
         tooltip: { backgroundColor: '#17211E', padding: 12, cornerRadius: 10, titleFont: { weight: '700' }, callbacks: { label: c => ` ${c.dataset.label}: ${formatIDR(c.parsed.y)}` } }
       },
       scales: {
-        x: { grid: { display: false }, border: { color: '#DFE6E3' }, ticks: { font: { size: 12, weight: '600' }, maxRotation: 0, autoSkip: false } },
+        x: { grid: { display: false }, border: { color: '#DFE6E3' }, ticks: { font: { size: window.innerWidth < 560 ? 10 : 12, weight: '600' }, maxRotation: 0, autoSkip: false } },
         y: { beginAtZero: true, border: { display: false }, grid: { color: '#ECF0EE' }, ticks: { callback: v => formatCompact(v), font: { size: 11.5 } } }
       }
     }
@@ -881,6 +1061,212 @@ function drawDonutChart(labels, values, centerBig, centerSmall, colors) {
     <li><i class="dot" style="--c:${colors[i]}"></i><span class="nm" title="${l}">${l}</span><span class="vl">${formatCompact(values[i])}</span><span class="pc">${fmtPct(pctOf(values[i], total))}</span></li>`).join('');
 }
 
+
+
+/* ======================= SETAHUN ======================= */
+const ALL_ENTITY_KEYS = ['safwan', 'ansan', 'amalqu', 'latihhobi', 'sjp', 'ppm'];
+
+function yearHeroHtml(Y, scope, dateLabel) {
+  const pctYear = pctOf(Y.omsetYtd, Y.targetYear);
+  const pacePct = pctOf(Y.omsetYtd, Y.targetToDate);
+  const sisa = Y.targetYear - Y.omsetYtd;
+  const withTarget = Y.months.filter(m => m.target > 0).length;
+  const max = Math.max(Y.targetYear, Y.omsetYtd, Y.targetToDate, 1);
+  const w = v => Math.max(0, Math.min(100, (v / max) * 100));
+  const year = STATE.currentMonth.slice(0, 4);
+  let sub = `<strong>${scope}</strong> mencatat omset ${formatIDR(Y.omsetYtd)} dari target setahun ${formatIDR(Y.targetYear)}, per ${dateLabel}. `;
+  sub += sisa > 0 ? `Sisa target ${formatIDR(sisa)}.` : `Sudah melewati target setahun sebesar ${formatIDR(-sisa)}.`;
+  if (withTarget < 12) sub += ` <span class="hero-note">Target setahun baru mencakup ${withTarget} bulan yang sudah terisi di spreadsheet.</span>`;
+  const items = [
+    `<div class="lg"><span class="lg-name"><i class="sw sw-fill"></i>Omset sampai hari ini</span><span class="lg-val">${formatIDR(Y.omsetYtd)}</span><span class="lg-note">${Y.done.length} bulan selesai dan ${Y.cur ? Y.cur.name : 'bulan berjalan'} berjalan</span></div>`,
+    `<div class="lg"><span class="lg-name"><i class="sw sw-end"></i>Target setahun</span><span class="lg-val">${formatIDR(Y.targetYear)}</span><span class="lg-note">${sisa > 0 ? 'Sisa ' + formatIDR(sisa) : 'Lebih ' + formatIDR(-sisa)}</span></div>`,
+    `<div class="lg"><span class="lg-name"><i class="sw sw-tick"></i>Jalur target sampai hari ini</span><span class="lg-val">${formatIDR(Y.targetToDate)}</span><span class="lg-note">Omset ${fmtPct(pacePct)} dari jalur</span></div>`,
+    `<div class="lg"><span class="lg-name"><i class="sw sw-est"></i>Rata-rata per bulan</span><span class="lg-val">${formatIDR(Y.avg)}</span><span class="lg-note">Dari ${Y.done.length} bulan yang sudah selesai</span></div>`
+  ];
+  $id('customDateProgressStrip').innerHTML = `
+    <div class="hero-top">
+      <div>
+        ${paceChip(pacePct)}
+        <h2>${fmtPct(pctYear)} dari target setahun ${year} sudah tercapai</h2>
+        <p class="hero-sub">${sub}</p>
+      </div>
+      <div class="hero-pct"><strong>${fmtPct(pctYear)}</strong><span>dari target tahun ${year}</span></div>
+    </div>
+    <div class="track-wrap" role="img" aria-label="Omset setahun ${formatIDR(Y.omsetYtd)} dari target ${formatIDR(Y.targetYear)}">
+      <div class="track">
+        <div class="track-fill" style="width:${w(Y.omsetYtd)}%"></div>
+        <div class="track-tick" style="left:${w(Y.targetToDate)}%"></div>
+        <div class="track-end" style="left:${w(Y.targetYear)}%"></div>
+      </div>
+    </div>
+    <div class="legend4">${items.join('')}</div>`;
+}
+
+function yearMatrixHtml(Y, keys) {
+  const head = Y.months.map(m => `<th class="mx-h ${m.status}">${m.short}${m.status === 'current' ? '<small>berjalan</small>' : ''}</th>`).join('');
+  const cell = (t, o, status) => {
+    if (status === 'future' || o === null || !(t > 0)) {
+      return `<td class="mx-c none"><span class="mx-p">–</span>${status !== 'future' && o ? `<span class="mx-v">${formatCompact(o)}</span>` : ''}</td>`;
+    }
+    const p = pctOf(o, t);
+    const cls = status === 'current' ? 'live' : p >= 100 ? 'good' : p >= 70 ? 'warn' : 'bad';
+    const glyph = status === 'current' ? '…' : p >= 100 ? '✓' : p >= 70 ? '–' : '!';
+    return `<td class="mx-c ${cls}"><span class="mx-p"><i class="mx-g" aria-hidden="true">${glyph}</i>${fmtPct(p, 0)}</span><span class="mx-v">${formatCompact(o)}</span></td>`;
+  };
+  const rows = keys.map(ek => `<tr><th class="mx-r" scope="row"><i class="dot" style="--c:${ENTITY_COLOR[ek]}"></i>${ENTITY_META[ek].short}</th>${Y.months.map(m => cell(m.by[ek].target, m.by[ek].omset, m.status)).join('')}</tr>`).join('');
+  const total = keys.length > 1 ? `<tr class="mx-total"><th class="mx-r" scope="row">Total</th>${Y.months.map(m => cell(m.target, m.omset, m.status)).join('')}</tr>` : '';
+  return `<div class="matrix-wrap"><table class="matrix"><thead><tr><th class="mx-r">Entitas</th>${head}</tr></thead><tbody>${rows}${total}</tbody></table></div>
+    <p class="mx-legend"><span><i class="mx-g good">✓</i> Target tercapai (100% atau lebih)</span><span><i class="mx-g warn">–</i> Mendekati (70% sampai 99%)</span><span><i class="mx-g bad">!</i> Di bawah 70%</span><span><i class="mx-g live">…</i> Bulan berjalan</span></p>`;
+}
+
+function renderYearView() {
+  const isHolding = STATE.activeTab === 'holding';
+  const keys = isHolding
+    ? ALL_ENTITY_KEYS.filter(k => STATE.holdingRegion === 'all' || ENTITY_META[k].region === STATE.holdingRegion)
+    : [STATE.activeTab];
+  const meta1 = ENTITY_META[keys[0]];
+  const year = STATE.currentMonth.slice(0, 4);
+  const curShort = MONTH_NAMES[Number(STATE.currentMonth.slice(5, 7)) - 1];
+  const Y = buildYearData(keys);
+  const hasGold = keys.some(k => ENTITY_META[k].isGold);
+  const scope = isHolding
+    ? (STATE.holdingRegion === 'all' ? 'Seluruh Pakkawaru Group' : STATE.holdingRegion === 'Bandung' ? 'Daerah Bandung' : `Daerah Gorontalo (emas ${goldTag()})`)
+    : meta1.name;
+  const dateLabel = `${Number(STATE.latestDate.slice(8, 10))} ${curShort} ${year}`;
+
+  $id('viewTitleHeading').textContent = isHolding ? `Setahun ${year}: ${STATE.holdingRegion === 'all' ? 'Pakkawaru Group' : scope}` : `${meta1.name}: setahun ${year}`;
+  $id('viewBadgeTag').textContent = isHolding ? `${keys.length} entitas` : `Daerah ${meta1.region}${meta1.isGold ? (STATE.goldMode === 'raw' ? ', riil 100%' : ', dibagi 3') : ''}`;
+  $id('viewSubtitleDesc').textContent = `Total akhir tiap bulan diambil dari spreadsheet "Pencapaian Bulanan ${year}". ${curShort} dihitung langsung dari data penjualan sampai ${dateLabel}.${hasGold ? ` Omset emas ${goldTag()}.` : ''}`;
+  $id('channelSubPills').classList.add('hidden');
+  $id('malaysiaFxBanner').classList.add('hidden');
+  $id('regionalCompareSection').classList.add('hidden');
+  $id('regionalCompareSection').innerHTML = '';
+  document.querySelectorAll('#holdingRegionTabs .region-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.region === STATE.holdingRegion));
+
+  yearHeroHtml(Y, scope, dateLabel);
+
+  /* kartu angka */
+  const pacePct = pctOf(Y.omsetYtd, Y.targetToDate);
+  const cards = [
+    { icon: 'wallet', title: `Omset ${year} sampai hari ini`, value: formatIDR(Y.omsetYtd), pct: pctOf(Y.omsetYtd, Y.targetYear),
+      rows: [['Dari target setahun', fmtPct(pctOf(Y.omsetYtd, Y.targetYear))], ['Sisa target', formatCompact(Math.max(0, Y.targetYear - Y.omsetYtd))]] },
+    { icon: 'target', title: `Target setahun ${year}`, value: formatIDR(Y.targetYear), pct: pctOf(Y.targetToDate, Y.targetYear),
+      rows: [['Jalur target sampai hari ini', formatCompact(Y.targetToDate)], ['Omset terhadap jalur', fmtPct(pacePct)]] },
+    { icon: 'trend', title: 'Rata-rata omset per bulan', value: formatIDR(Y.avg),
+      rows: [['Bulan terbaik', Y.best ? `${Y.best.short}, ${formatCompact(Y.best.omset)}` : '-'], ['Bulan terendah', Y.low ? `${Y.low.short}, ${formatCompact(Y.low.omset)}` : '-'], ['Bulan selesai', `${Y.done.length} bulan`]] },
+    { icon: 'check', title: 'Bulan yang mencapai target', value: `${Y.hit}<small>dari ${Y.done.length} bulan</small>`, pct: Y.done.length ? (Y.hit / Y.done.length) * 100 : 0,
+      rows: [['Mendekati target (70% sampai 99%)', `${Y.near} bulan`], ['Capaian tertinggi', Y.topPct ? `${Y.topPct.short}, ${fmtPct(Y.topPct.pct, 0)}` : '-']] }
+  ];
+  renderKpis(cards);
+
+  /* grafik */
+  $id('barChartHeading').textContent = `Target dan omset tiap bulan ${year}`;
+  $id('barChartSub').textContent = `${scope}. Sentuh batang grafik untuk melihat nominalnya. ${curShort} masih berjalan.`;
+  const labels = Y.months.map(m => m.status === 'current' ? [m.short, '(berjalan)'] : m.short);
+  drawBarChart(labels, Y.months.map(m => (m.target > 0 ? m.target : null)), Y.months.map(m => m.omset), 'Target bulanan', 'Omset tercapai');
+
+  if (isHolding && keys.length > 1) {
+    const vals = keys.map(k => Y.months.reduce((a, m) => a + (m.by[k].omset || 0), 0));
+    $id('donutChartHeading').textContent = `Kontribusi omset per entitas ${year}`;
+    $id('donutChartSub').textContent = 'Porsi tiap entitas terhadap total omset setahun sampai hari ini.';
+    drawDonutChart(keys.map(k => ENTITY_META[k].short), vals, fmtPct(pctOf(Y.omsetYtd, Y.targetYear)), 'dari target setahun', keys.map(k => ENTITY_COLOR[k]));
+  } else {
+    $id('donutChartHeading').textContent = 'Capaian terhadap target setahun';
+    $id('donutChartSub').textContent = 'Bagian yang sudah tercapai dan sisa target.';
+    drawDonutChart(['Omset tercapai', 'Sisa target'], [Y.omsetYtd, Math.max(0, Y.targetYear - Y.omsetYtd)], fmtPct(pctOf(Y.omsetYtd, Y.targetYear)), 'dari target setahun', [BRAND, '#DCE4E0']);
+  }
+
+  /* matriks capaian (hanya ringkasan keseluruhan) */
+  const mx = $id('yearSection');
+  if (isHolding) {
+    mx.classList.remove('hidden');
+    $id('yearSectionSub').textContent = `Capaian omset tiap entitas terhadap target bulannya. Geser ke samping untuk melihat semua bulan.`;
+    $id('yearMatrixBody').innerHTML = yearMatrixHtml(Y, keys);
+  } else { mx.classList.add('hidden'); $id('yearMatrixBody').innerHTML = ''; }
+
+  /* tabel */
+  const gold = !isHolding && meta1.isGold;
+  $id('summaryTableHeading').textContent = `Rekap bulanan ${year}: ${scope}`;
+  $id('summaryTableSub').textContent = `Target, omset, dan capaian tiap bulan${gold ? `. Omset emas ${goldTag()}` : ''}.`;
+  $id('summaryTableHead').innerHTML = `<tr><th>Bulan</th><th class="num">Target bulan</th>${gold ? '<th class="num col-raw">Penjualan riil (100%)</th>' : ''}<th class="num">Omset${gold ? ` (${goldTag()})` : ''}</th><th class="num">Capaian</th><th class="num col-diff">Selisih dengan target</th></tr>`;
+  const rowsHtml = Y.months.map(m => {
+    const dual = v => `<span class="vf">${formatIDR(v)}</span><span class="vc">${formatCompact(v)}</span>`;
+    const diff = m.omset !== null && m.target > 0 ? m.omset - m.target : null;
+    let chip;
+    if (m.status === 'future') chip = `<span class="chip chip-neutral">Belum berjalan</span>`;
+    else if (m.status === 'current') chip = `<span class="chip chip-neutral">Berjalan</span>`;
+    else if (!m.has) chip = `<span class="chip chip-neutral">Belum ada data</span>`;
+    else chip = statusChip(m.pct || 0);
+    const pctTxt = m.pct !== null ? fmtPct(m.pct, 1) : '-';
+    const pcCls = m.status === 'past' && m.pct !== null ? (m.pct >= 100 ? 't-good' : m.pct >= 70 ? 't-warn' : 't-bad') : '';
+    return `<tr class="${m.status === 'current' ? 'row-live' : ''}">
+      <td class="cell-first" data-label="Bulan"><strong>${m.name}</strong></td>
+      <td class="num" data-label="Target bulan">${m.target > 0 ? dual(m.target) : '-'}</td>
+      ${gold ? `<td class="num col-raw" data-label="Penjualan riil (100%)">${m.status === 'future' ? '-' : formatIDR(m.raw)}</td>` : ''}
+      <td class="num" data-label="Omset"><strong>${m.omset !== null ? dual(m.omset) : '-'}</strong></td>
+      <td class="num" data-label="Capaian"><div>${chip}<span class="cell-sub pcv ${pcCls}">${pctTxt}</span></div></td>
+      <td class="num col-diff" data-label="Selisih"><strong class="${diff === null ? '' : diff >= 0 ? 't-good' : 't-bad'}">${diff === null ? '-' : (diff >= 0 ? '+' : '') + formatIDR(diff)}</strong></td></tr>`;
+  }).join('');
+  const sumTarget = Y.targetToDate;
+  const curDays = Math.max(1, Number(STATE.latestDate.slice(8, 10)));
+  const totalRow = `<tr class="row-total">
+      <td class="cell-first" data-label="Bulan"><strong>Total sampai ${dateLabel}</strong></td>
+      <td class="num" data-label="Target bulan"><div><strong><span class="vf">${formatIDR(sumTarget)}</span><span class="vc">${formatCompact(sumTarget)}</span></strong><span class="cell-sub">${curShort} dihitung ${curDays} hari</span></div></td>
+      ${gold ? `<td class="num col-raw" data-label="Penjualan riil (100%)"><strong>${formatIDR(Y.months.filter(m => m.status !== 'future').reduce((a, m) => a + m.raw, 0))}</strong></td>` : ''}
+      <td class="num" data-label="Omset"><strong><span class="vf">${formatIDR(Y.omsetYtd)}</span><span class="vc">${formatCompact(Y.omsetYtd)}</span></strong></td>
+      <td class="num" data-label="Capaian"><div>${statusChip(pctOf(Y.omsetYtd, sumTarget))}<span class="cell-sub pcv">${fmtPct(pctOf(Y.omsetYtd, sumTarget))}</span></div></td>
+      <td class="num col-diff" data-label="Selisih"><strong class="${Y.omsetYtd - sumTarget >= 0 ? 't-good' : 't-bad'}">${Y.omsetYtd - sumTarget >= 0 ? '+' : ''}${formatIDR(Y.omsetYtd - sumTarget)}</strong></td></tr>`;
+  $id('summaryTableBody').innerHTML = rowsHtml + totalRow;
+
+  /* bahan teks bagikan */
+  STATE.share = {
+    title: `${isHolding ? 'Pakkawaru Group' : meta1.short} - Setahun ${year}`,
+    head: [
+      `Omset sampai ${dateLabel}: ${formatIDR(Y.omsetYtd)} (${fmtPct(pctOf(Y.omsetYtd, Y.targetYear))} dari target setahun ${formatIDR(Y.targetYear)})`,
+      `Rata-rata per bulan: ${formatIDR(Y.avg)}. Bulan mencapai target: ${Y.hit} dari ${Y.done.length}.`
+    ],
+    rows: Y.months.filter(m => m.has && m.status !== 'future').map(m => [m.name + (m.status === 'current' ? ' (berjalan)' : ''), formatIDR(m.omset), m.pct !== null ? `${fmtPct(m.pct, 0)} dari target ${formatCompact(m.target)}` : '']),
+    gold: hasGold
+  };
+}
+
+/* ======================= BAGIKAN ======================= */
+function buildShareText() {
+  const sh = STATE.share;
+  if (!sh) return '';
+  const lines = [`*${sh.title}*`, ...(sh.head || [])];
+  if (sh.rows && sh.rows.length) {
+    lines.push('');
+    sh.rows.forEach(r => lines.push(`• ${r[0]}: ${r[1]}${r[2] ? ' (' + r[2] + ')' : ''}`));
+  }
+  if (sh.gold) lines.push('', `Omset emas (SJP dan PPM) ${goldTag()}.`);
+  const upd = DATA && DATA.generatedAtWib ? `, diperbarui ${String(DATA.generatedAtWib).slice(11, 16)} WIB` : '';
+  lines.push('', `_Data sampai ${fmtShortDate(STATE.latestDate)}${upd}_`);
+  return lines.join('\n');
+}
+
+function showToast(msg) {
+  const t = $id('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+async function shareSummary() {
+  const text = buildShareText();
+  if (!text) { showToast('Data belum siap dibagikan.'); return; }
+  try {
+    if (navigator.share) { await navigator.share({ text }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Ringkasan disalin. Tempel di WhatsApp.');
+  } catch (e) {
+    window.prompt('Salin ringkasan ini:', text);
+  }
+}
 /**
  * ============================================================================
  * STATUS SINKRONISASI, KESEGARAN DATA & EVENT LISTENERS
@@ -1031,7 +1417,31 @@ window.switchTab = function (tabKey) {
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabKey));
   window.scrollTo({ top: 0, behavior: 'smooth' });
   renderApp();
+  centerActiveTab();
 };
+
+function centerActiveTab() {
+  const a = document.querySelector('.nav-tab.active');
+  if (a && a.scrollIntoView) { try { a.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (e) { a.scrollIntoView(); } }
+}
+
+/* titik penunjuk untuk kartu angka yang bisa digeser di ponsel */
+function bindKpiDots() {
+  const grid = document.getElementById('primaryKpiGrid'), dots = document.getElementById('kpiDots');
+  if (!grid || !dots) return;
+  const n = grid.children.length;
+  dots.innerHTML = Array.from({ length: n }, (_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('');
+  grid.scrollLeft = 0;
+  if (grid._dotsBound) return;
+  grid._dotsBound = true;
+  grid.addEventListener('scroll', () => {
+    const first = grid.children[0];
+    if (!first) return;
+    const step = first.getBoundingClientRect().width + 12;
+    const idx = Math.min(grid.children.length - 1, Math.round(grid.scrollLeft / step));
+    dots.querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i === idx));
+  }, { passive: true });
+}
 
 window.setHoldingRegion = function (regionName) {
   STATE.holdingRegion = regionName;
@@ -1110,8 +1520,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('monthSelector').addEventListener('change', e => {
     STATE.selectedMonth = e.target.value;
+    STATE.lastMonth = e.target.value;
     renderApp();
   });
+
+  document.querySelectorAll('#viewScope .seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setScope(btn.dataset.scope);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      renderApp();
+    });
+  });
+
+  document.getElementById('btnToggleFilters').addEventListener('click', () => {
+    STATE.filtersOpen = !STATE.filtersOpen;
+    document.getElementById('filtersBox').classList.toggle('open', STATE.filtersOpen);
+    document.getElementById('btnToggleFilters').setAttribute('aria-expanded', String(STATE.filtersOpen));
+  });
+
+  document.getElementById('btnShare').addEventListener('click', shareSummary);
 
   ['filterStartDate', 'filterEndDate'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
