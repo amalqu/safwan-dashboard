@@ -3,285 +3,267 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>Pakkawaru Group — Executive Dashboard</title>
+  <meta name="theme-color" content="#0B6B57" />
+  <title>Pakkawaru Group — Dashboard Omset</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
 
-  <!-- ================= GERBANG LOGIN & PIN ================= -->
-  <div id="securityGateOverlay" class="auth-overlay">
-    <div class="auth-card">
-      <div class="auth-brand">
-        <div class="logo-mark">
-          <span class="m-bar b-blue"></span>
-          <span class="m-bar b-green"></span>
-          <span class="m-bar b-indigo"></span>
-        </div>
-        <div>
-          <h2>Pakkawaru Group</h2>
-          <p>Sistem Monitoring Omset & Target Realtime</p>
-        </div>
+  <!-- ================= MASUK ================= -->
+  <div id="securityGateOverlay" class="gate">
+    <div class="gate-card">
+      <div class="gate-intro">
+        <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <h1>Pakkawaru Group</h1>
+        <p>Pantau omset, target, dan perkiraan akhir bulan semua entitas dalam satu layar. Data diambil langsung dari spreadsheet.</p>
       </div>
 
-      <form id="authLoginForm" autocomplete="off">
-        <div class="auth-field">
+      <form id="authLoginForm" class="gate-form" autocomplete="off">
+        <h2>Masuk ke dashboard</h2>
+
+        <div class="field">
           <label for="authUsername">Username</label>
-          <input type="text" id="authUsername" placeholder="pakkawaru" required />
+          <input type="text" id="authUsername" autocomplete="username" required />
         </div>
 
-        <div class="auth-field">
+        <div class="field">
           <label for="authPassword">Password</label>
-          <input type="password" id="authPassword" placeholder="Masukkan password" required />
+          <div class="field-inline">
+            <input type="password" id="authPassword" autocomplete="current-password" required />
+            <button type="button" class="field-toggle" id="btnTogglePw" aria-label="Tampilkan password">Lihat</button>
+          </div>
         </div>
 
-        <div class="auth-field">
-          <label for="authPinInput">Kode PIN (6 Digit)</label>
-          <input type="password" id="authPinInput" maxlength="6" inputmode="numeric" placeholder="••••••" required />
-          <small class="auth-hint">Masukkan 6 digit PIN yang diberikan administrator.</small>
+        <div class="field">
+          <label for="authPinInput">PIN 6 digit</label>
+          <input type="password" id="authPinInput" maxlength="6" inputmode="numeric" pattern="[0-9]*" required />
         </div>
 
-        <div class="auth-field hidden" id="authApiWrap">
-          <label for="authApiUrl">URL API Data (diisi sekali saja)</label>
+        <div class="field hidden" id="authApiWrap">
+          <label for="authApiUrl">Alamat data (URL API)</label>
           <input type="url" id="authApiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
-          <small class="auth-hint">Tempel URL Web App Apps Script. Tidak perlu diisi lagi setelah tersimpan di browser ini.</small>
+          <small>Cukup diisi sekali. Tersimpan di browser ini.</small>
         </div>
 
-        <div id="authErrorMsg" class="auth-error hidden">Username, Password, atau PIN tidak sesuai.</div>
+        <div id="authErrorMsg" class="form-error hidden" role="alert">Username, password, atau PIN tidak sesuai.</div>
 
-        <button type="submit" class="btn-auth-submit">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          <span>Masuk ke Dashboard</span>
-        </button>
+        <button type="submit" class="btn btn-primary btn-block"><span>Masuk</span></button>
       </form>
     </div>
   </div>
 
-  <!-- ================= APLIKASI UTAMA ================= -->
-  <div id="loadingBar" class="loading-bar"></div>
-  <div id="appMainWrapper" class="app-wrapper hidden">
+  <div id="loadingBar" class="loading-bar" aria-hidden="true"></div>
 
-    <!-- HEADER ATAS -->
-    <header class="top-header">
-      <div class="header-left">
-        <div class="brand-logo" id="btnHomeLogo">
-          <div class="logo-mark">
-            <span class="m-bar b-blue"></span>
-            <span class="m-bar b-green"></span>
-            <span class="m-bar b-indigo"></span>
-          </div>
-          <div class="brand-title-wrap">
-            <span class="brand-text">Pakkawaru<span class="brand-sub">Group</span></span>
-            <span class="brand-tagline">Executive Financial Dashboard</span>
-          </div>
-        </div>
+  <!-- ================= APLIKASI ================= -->
+  <div id="appMainWrapper" class="app hidden">
 
-        <div class="fx-badge hidden" id="fxRateBadge">
-          <span id="fxRateText">Kurs Shopee Malaysia: 1 MYR = Rp4.452</span>
+    <header class="appbar">
+      <div class="appbar-inner">
+        <button class="brand" id="btnHomeLogo" aria-label="Kembali ke ringkasan keseluruhan">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand-text"><strong>Pakkawaru Group</strong><small>Dashboard omset</small></span>
+        </button>
+
+        <div class="appbar-actions">
+          <div class="sync-badge" role="status" aria-live="polite">
+            <span class="pulse-dot"></span>
+            <span id="lastSyncText">Menghubungkan ke spreadsheet…</span>
+          </div>
+          <button class="btn btn-soft" id="btnSyncNow">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span class="hide-sm">Perbarui</span>
+          </button>
+          <button class="icon-btn" id="btnOpenConfig" title="Pengaturan" aria-label="Pengaturan">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="#fff"/><circle cx="15" cy="12" r="2.2" fill="#fff"/><circle cx="8" cy="18" r="2.2" fill="#fff"/></svg>
+          </button>
+          <button class="icon-btn" id="btnLockSession" title="Keluar" aria-label="Keluar dari dashboard">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
         </div>
       </div>
 
-      <div class="header-right">
-        <div class="sync-badge">
-          <span class="pulse-dot"></span>
-          <span id="lastSyncText">Menghubungkan ke spreadsheet…</span>
+      <nav class="tabs" aria-label="Pilih entitas">
+        <div class="tabs-inner" id="mainNavTabs">
+          <button class="nav-tab active" data-tab="holding">Keseluruhan</button>
+          <button class="nav-tab" data-tab="safwan"><i class="dot" style="--c:#2a78d6"></i>PT Safwan</button>
+          <button class="nav-tab" data-tab="ansan"><i class="dot" style="--c:#eb6834"></i>PT BQY Ansan</button>
+          <button class="nav-tab" data-tab="amalqu"><i class="dot" style="--c:#1baf7a"></i>Yayasan Amalqu</button>
+          <button class="nav-tab" data-tab="latihhobi"><i class="dot" style="--c:#eda100"></i>Latih Hobi</button>
+          <button class="nav-tab" data-tab="sjp"><i class="dot" style="--c:#e87ba4"></i>CV SJP (Emas)</button>
+          <button class="nav-tab" data-tab="ppm"><i class="dot" style="--c:#6250d6"></i>PPM (Emas)</button>
         </div>
-
-        <button class="btn-header-action" id="btnSyncNow">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M21 2v6h-6"></path>
-            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-            <path d="M3 22v-6h6"></path>
-            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-          </svg>
-          <span class="btn-text-hide-sm">Refresh</span>
-        </button>
-
-        <button class="icon-btn" id="btnOpenConfig" title="Pengaturan Kurs & Integrasi">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </button>
-
-        <button class="icon-btn danger-hover" id="btnLockSession" title="Kunci Dashboard">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-        </button>
-      </div>
+      </nav>
     </header>
 
-    <!-- NAVIGASI 7 TAB ENTITAS -->
-    <nav class="sub-navbar">
-      <div class="nav-tabs" id="mainNavTabs">
-        <button class="nav-tab active" data-tab="holding">Keseluruhan Pakkawaru</button>
-        <button class="nav-tab" data-tab="safwan">PT Safwan Berkah</button>
-        <button class="nav-tab" data-tab="ansan">PT BQY Ansan</button>
-        <button class="nav-tab" data-tab="amalqu">Yayasan Amalqu</button>
-        <button class="nav-tab" data-tab="latihhobi">Latih Hobi</button>
-        <button class="nav-tab" data-tab="sjp">CV SJP (Emas)</button>
-        <button class="nav-tab" data-tab="ppm">PPM (Emas)</button>
-      </div>
-    </nav>
+    <main class="page">
 
-    <!-- KONTEN UTAMA -->
-    <main class="main-container">
-
-      <!-- PANEL KONTROL FILTER TANGGAL & BULAN -->
-      <section class="control-panel">
-        <div class="control-left">
-          <div class="control-group">
-            <label for="monthSelector">Periode Bulan</label>
-            <select id="monthSelector" class="select-control">
-              <option value="" selected>Memuat…</option>
-            </select>
+      <!-- Judul halaman -->
+      <section class="page-head">
+        <div class="page-head-text">
+          <div class="title-row">
+            <h1 id="viewTitleHeading">Ringkasan Pakkawaru Group</h1>
+            <span class="chip chip-neutral" id="viewBadgeTag"></span>
           </div>
+          <p id="viewSubtitleDesc"></p>
+        </div>
+        <div class="fx-badge hidden" id="fxRateBadge"><span id="fxRateText">Kurs: 1 MYR = Rp4.452</span></div>
+      </section>
 
-          <div class="preset-buttons" id="realtimeDatePresets"></div>
+      <!-- Filter -->
+      <section class="filters" aria-label="Filter periode">
+        <div class="filter-block">
+          <label for="monthSelector">Periode</label>
+          <select id="monthSelector" class="select"><option value="">Memuat…</option></select>
+        </div>
 
-          <div class="control-group gold-toggle-group">
-            <label>Tampilan Omset Emas (SJP & PPM)</label>
-            <div class="gold-toggle">
-              <button type="button" class="chip-btn active" id="goldModeDiv3">Diakui ÷ 3</button>
-              <button type="button" class="chip-btn" id="goldModeRaw">Riil 100% (sebelum ÷ 3)</button>
+        <div class="filter-block grow" id="customDateWrap">
+          <label>Rentang tanggal</label>
+          <div class="filter-row">
+            <div class="segmented" id="realtimeDatePresets" role="group" aria-label="Rentang cepat"></div>
+            <div class="date-range">
+              <input type="date" id="filterStartDate" aria-label="Tanggal mulai" />
+              <span>sampai</span>
+              <input type="date" id="filterEndDate" aria-label="Tanggal akhir" />
             </div>
           </div>
         </div>
 
-        <div class="control-right" id="customDateWrap">
-          <span class="date-label">Custom Tanggal:</span>
-          <div class="custom-date-box">
-            <input type="date" id="filterStartDate" />
-            <span>s/d</span>
-            <input type="date" id="filterEndDate" />
+        <div class="filter-block hidden" id="goldToggleWrap">
+          <label>Omset emas (SJP dan PPM)</label>
+          <div class="segmented" role="group" aria-label="Tampilan omset emas">
+            <button type="button" class="seg-btn active" id="goldModeDiv3">Dibagi 3</button>
+            <button type="button" class="seg-btn" id="goldModeRaw">Riil 100%</button>
           </div>
         </div>
       </section>
 
-      <!-- KESEGARAN DATA PER SUMBER -->
-      <section id="dataFreshness" class="data-freshness"></section>
+      <!-- Kesegaran data -->
+      <section id="dataFreshness" class="freshness"></section>
 
-      <!-- BARIS JUDUL ENTITAS & SUB-FILTER WILAYAH / TOKO -->
-      <div class="section-top-bar">
-        <div>
-          <span class="section-tag" id="viewBadgeTag">LAPORAN KONSOLIDASI</span>
-          <h1 class="section-heading" id="viewTitleHeading">Keseluruhan Pakkawaru Group</h1>
-          <p class="section-desc" id="viewSubtitleDesc">Ringkasan Target, Omset Tercapai, dan Estimasi Akhir Bulan</p>
+      <!-- Pilihan daerah (Keseluruhan) dan toko (Safwan, BQY Ansan) -->
+      <div class="switchers">
+        <div class="segmented segmented-lg" id="holdingRegionTabs" role="group" aria-label="Pilih daerah">
+          <button class="region-tab-btn seg-btn active" data-region="all">Semua daerah</button>
+          <button class="region-tab-btn seg-btn" data-region="Bandung">Bandung</button>
+          <button class="region-tab-btn seg-btn" data-region="Gorontalo">Gorontalo</button>
         </div>
-
-        <!-- TOMBOL TAB MODE DAERAH (MUNCUL DI DASHBOARD UTAMA) -->
-        <div class="region-mode-tabs" id="holdingRegionTabs">
-          <button class="region-tab-btn active" data-region="all">Semua Daerah (Nasional)</button>
-          <button class="region-tab-btn" data-region="Bandung">Detail Daerah Bandung</button>
-          <button class="region-tab-btn" data-region="Gorontalo">Detail Daerah Gorontalo</button>
-        </div>
-
-        <!-- TOMBOL SUB-TOKO (MUNCUL DI PT SAFWAN & PT BQY ANSAN) -->
-        <div class="sub-channel-pills hidden" id="channelSubPills"></div>
+        <div class="pills hidden" id="channelSubPills" role="group" aria-label="Pilih toko"></div>
       </div>
 
-      <!-- HERO CARD PROGRES TARGET CUSTOM TANGGAL (KONTRAS TINGGI & SANGAT JELAS) -->
-      <section id="customDateProgressStrip" class="hero-target-card"></section>
+      <!-- Ringkasan progres -->
+      <section id="customDateProgressStrip" class="hero"></section>
 
-      <!-- 6 KARTU INDIKATOR UTAMA -->
-      <section class="kpi-six-grid" id="primaryKpiGrid"></section>
+      <!-- Angka utama -->
+      <section id="primaryKpiGrid" class="kpi-grid" aria-label="Angka utama"></section>
 
-      <!-- PANEL KONVERSI RINGGIT KE RUPIAH (HANYA MUNCUL SAAT KLIK SHOPEE MALAYSIA) -->
-      <section id="malaysiaFxBanner" class="fx-conversion-panel hidden"></section>
+      <!-- Konversi Ringgit -->
+      <section id="malaysiaFxBanner" class="fx-panel hidden"></section>
 
-      <!-- DASHBOARD PER DAERAH: BANDUNG & GORONTALO (UKURAN BESAR & BISA DIKLIK DETAIL) -->
-      <section id="regionalCompareSection" class="regional-Command-section"></section>
+      <!-- Perbandingan daerah -->
+      <section id="regionalCompareSection" class="regions"></section>
 
-      <!-- GRAFIK VISUAL -->
-      <section class="charts-two-col">
-        <div class="panel-card">
+      <!-- Grafik -->
+      <section class="charts">
+        <div class="panel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title" id="barChartHeading">Grafik Perbandingan Target vs Omset Tercapai</h2>
-              <p class="panel-subtitle" id="barChartSub">Ketuk atau arahkan kursor pada batang grafik untuk melihat nominal detail</p>
+              <h2 id="barChartHeading">Target dan omset</h2>
+              <p id="barChartSub">Sentuh batang grafik untuk melihat nominalnya.</p>
             </div>
-            <select id="chartViewMode" class="select-control-sm">
-              <option value="custom_target">Target Custom Tanggal vs Omset</option>
-              <option value="monthly_target">Target Bulanan vs Omset</option>
-              <option value="real_vs_estimasi">Omset vs Estimasi Akhir Bulan</option>
-              <option value="monthly_trend">Tren Bulanan 2026</option>
+            <select id="chartViewMode" class="select select-sm" aria-label="Jenis grafik">
+              <option value="custom_target">Target rentang tanggal vs omset</option>
+              <option value="monthly_target">Target bulanan vs omset</option>
+              <option value="real_vs_estimasi">Omset vs perkiraan akhir bulan</option>
+              <option value="monthly_trend">Tren bulanan 2026</option>
             </select>
           </div>
-          <div class="chart-box-lg">
-            <canvas id="mainBarCanvas"></canvas>
-          </div>
+          <div class="chart-box"><canvas id="mainBarCanvas" role="img" aria-label="Grafik batang target dan omset"></canvas></div>
         </div>
 
-        <div class="panel-card">
+        <div class="panel">
           <div class="panel-head">
             <div>
-              <h2 class="panel-title" id="donutChartHeading">Proporsi Kontribusi Omset</h2>
-              <p class="panel-subtitle" id="donutChartSub">Persentase capaian terhadap target</p>
+              <h2 id="donutChartHeading">Kontribusi omset</h2>
+              <p id="donutChartSub">Porsi tiap bagian terhadap total omset.</p>
             </div>
           </div>
-          <div class="chart-box-donut">
-            <canvas id="mainDonutCanvas"></canvas>
-            <div class="donut-center-info">
-              <strong id="donutCenterBig">0%</strong>
-              <span id="donutCenterSmall">Capaian</span>
+          <div class="donut-wrap">
+            <div class="donut-box">
+              <canvas id="mainDonutCanvas" role="img" aria-label="Grafik donat kontribusi omset"></canvas>
+              <div class="donut-center">
+                <strong id="donutCenterBig">0%</strong>
+                <span id="donutCenterSmall">Capaian</span>
+              </div>
             </div>
+            <ul id="donutCustomLegend" class="legend-list"></ul>
           </div>
-          <div id="donutCustomLegend" class="donut-legend-list"></div>
         </div>
       </section>
 
-      <!-- TABEL RINGKASAN -->
-      <section class="panel-card table-panel">
+      <!-- Tabel -->
+      <section class="panel panel-table">
         <div class="panel-head">
           <div>
-            <h2 class="panel-title" id="summaryTableHeading">Tabel Ringkasan Kinerja</h2>
-            <p class="panel-subtitle" id="summaryTableSub">Menampilkan Target, Omset Tercapai, Qty Berhasil, serta Return/Cancel dalam Pcs dan Nominal</p>
+            <h2 id="summaryTableHeading">Rincian kinerja</h2>
+            <p id="summaryTableSub">Target, omset, jumlah pesanan, dan return atau cancel.</p>
           </div>
         </div>
-        <div class="table-scroll">
-          <table class="clean-table">
+        <div class="table-wrap">
+          <table class="data-table">
             <thead id="summaryTableHead"></thead>
             <tbody id="summaryTableBody"></tbody>
           </table>
         </div>
       </section>
 
-    </main>
+      <!-- Cara membaca -->
+      <details class="howto">
+        <summary>Bagaimana angka ini dihitung?</summary>
+        <div class="howto-body">
+          <dl>
+            <div><dt>Omset tercapai</dt><dd>Jumlah penjualan yang berhasil. Pesanan batal, cancel, dan return tidak ikut dihitung.</dd></div>
+            <div><dt>Target rentang tanggal</dt><dd>Jumlah hari yang dipilih dikali target harian.</dd></div>
+            <div><dt>Perkiraan akhir bulan</dt><dd>Rata-rata omset per hari dikali 30 hari.</dd></div>
+            <div><dt>Omset emas (SJP dan PPM)</dt><dd>Penjualan riil dibagi 3. Pakai tombol "Riil 100%" untuk melihat angka sebelum dibagi 3.</dd></div>
+            <div><dt>Shopee Malaysia</dt><dd>Dihitung dalam Ringgit lalu dikonversi ke Rupiah dengan kurs di pengaturan.</dd></div>
+            <div><dt>Status capaian</dt><dd>Di atas target: 100% atau lebih. Mendekati target: 70% sampai kurang dari 100%. Di bawah target: kurang dari 70%.</dd></div>
+          </dl>
+        </div>
+      </details>
 
+    </main>
   </div>
 
-  <!-- MODAL PENGATURAN -->
-  <div id="settingsModal" class="modal-overlay hidden">
+  <!-- ================= PENGATURAN ================= -->
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>Pengaturan Data & Kurs</h3>
-        <button id="btnCloseSettings" class="btn-close-icon">✕</button>
+        <h3 id="settingsTitle">Pengaturan</h3>
+        <button id="btnCloseSettings" class="icon-btn" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
       </div>
       <div class="modal-body">
-        <div class="form-row">
-          <label for="cfgApiUrl">URL API Data (Apps Script Web App)</label>
+        <div class="field">
+          <label for="cfgApiUrl">Alamat data (URL API)</label>
           <input type="text" id="cfgApiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
         </div>
-        <div class="form-row">
-          <label for="cfgMyrRate">Kurs 1 Ringgit Malaysia (MYR) ke Rupiah (IDR)</label>
+        <div class="field">
+          <label for="cfgMyrRate">Kurs 1 Ringgit (MYR) ke Rupiah</label>
           <input type="number" id="cfgMyrRate" value="4452" step="1" />
-          <small class="auth-hint" style="color:#64748B;">Default mengikuti kurs di server (Rp4.452, sama dengan spreadsheet). Ubah di sini hanya untuk tampilan di browser ini.</small>
+          <small>Bawaan mengikuti kurs di server (Rp4.452, sama dengan spreadsheet). Mengubahnya hanya berlaku di browser ini.</small>
         </div>
       </div>
       <div class="modal-foot">
-        <button id="btnSaveSettings" class="btn-primary-full">Simpan Pengaturan</button>
+        <button id="btnSaveSettings" class="btn btn-primary btn-block">Simpan</button>
       </div>
     </div>
   </div>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
