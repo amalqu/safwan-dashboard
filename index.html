@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
 
@@ -41,7 +41,13 @@
         <div class="auth-field">
           <label for="authPinInput">Kode PIN (6 Digit)</label>
           <input type="password" id="authPinInput" maxlength="6" inputmode="numeric" placeholder="••••••" required />
-          <small class="auth-hint">PIN Keamanan: 739482</small>
+          <small class="auth-hint">Masukkan 6 digit PIN yang diberikan administrator.</small>
+        </div>
+
+        <div class="auth-field hidden" id="authApiWrap">
+          <label for="authApiUrl">URL API Data (diisi sekali saja)</label>
+          <input type="url" id="authApiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+          <small class="auth-hint">Tempel URL Web App Apps Script. Tidak perlu diisi lagi setelah tersimpan di browser ini.</small>
         </div>
 
         <div id="authErrorMsg" class="auth-error hidden">Username, Password, atau PIN tidak sesuai.</div>
@@ -58,6 +64,7 @@
   </div>
 
   <!-- ================= APLIKASI UTAMA ================= -->
+  <div id="loadingBar" class="loading-bar"></div>
   <div id="appMainWrapper" class="app-wrapper hidden">
 
     <!-- HEADER ATAS -->
@@ -76,14 +83,14 @@
         </div>
 
         <div class="fx-badge hidden" id="fxRateBadge">
-          <span id="fxRateText">Kurs Shopee Malaysia: 1 MYR = Rp3.580</span>
+          <span id="fxRateText">Kurs Shopee Malaysia: 1 MYR = Rp4.452</span>
         </div>
       </div>
 
       <div class="header-right">
         <div class="sync-badge">
           <span class="pulse-dot"></span>
-          <span id="lastSyncText">Realtime Aktif</span>
+          <span id="lastSyncText">Menghubungkan ke spreadsheet…</span>
         </div>
 
         <button class="btn-header-action" id="btnSyncNow">
@@ -134,33 +141,33 @@
           <div class="control-group">
             <label for="monthSelector">Periode Bulan</label>
             <select id="monthSelector" class="select-control">
-              <option value="2026-11" selected>November 2026 (Realtime)</option>
-              <option value="2026-10">Oktober 2026</option>
-              <option value="2026-09">September 2026</option>
-              <option value="2026-08">Agustus 2026</option>
-              <option value="2026-07">Juli 2026</option>
-              <option value="2026-06">Juni 2026</option>
-              <option value="2026-05">Mei 2026</option>
-              <option value="2026-04">April 2026</option>
-              <option value="2026-03">Maret 2026</option>
-              <option value="2026-02">Februari 2026</option>
-              <option value="2026-01">Januari 2026</option>
-              <option value="2026-ALL">Akumulasi Tahun 2026</option>
+              <option value="" selected>Memuat…</option>
             </select>
           </div>
 
           <div class="preset-buttons" id="realtimeDatePresets"></div>
+
+          <div class="control-group gold-toggle-group">
+            <label>Tampilan Omset Emas (SJP & PPM)</label>
+            <div class="gold-toggle">
+              <button type="button" class="chip-btn active" id="goldModeDiv3">Diakui ÷ 3</button>
+              <button type="button" class="chip-btn" id="goldModeRaw">Riil 100% (sebelum ÷ 3)</button>
+            </div>
+          </div>
         </div>
 
         <div class="control-right" id="customDateWrap">
           <span class="date-label">Custom Tanggal:</span>
           <div class="custom-date-box">
-            <input type="date" id="filterStartDate" value="2026-11-01" min="2026-11-01" max="2026-11-30" />
+            <input type="date" id="filterStartDate" />
             <span>s/d</span>
-            <input type="date" id="filterEndDate" value="2026-11-17" min="2026-11-01" max="2026-11-30" />
+            <input type="date" id="filterEndDate" />
           </div>
         </div>
       </section>
+
+      <!-- KESEGARAN DATA PER SUMBER -->
+      <section id="dataFreshness" class="data-freshness"></section>
 
       <!-- BARIS JUDUL ENTITAS & SUB-FILTER WILAYAH / TOKO -->
       <div class="section-top-bar">
@@ -205,7 +212,7 @@
               <option value="custom_target">Target Custom Tanggal vs Omset</option>
               <option value="monthly_target">Target Bulanan vs Omset</option>
               <option value="real_vs_estimasi">Omset vs Estimasi Akhir Bulan</option>
-              <option value="monthly_trend">Tren Bulanan (Jan - Nov 2026)</option>
+              <option value="monthly_trend">Tren Bulanan 2026</option>
             </select>
           </div>
           <div class="chart-box-lg">
@@ -255,21 +262,18 @@
   <div id="settingsModal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>Pengaturan Kurs & Integrasi</h3>
+        <h3>Pengaturan Data & Kurs</h3>
         <button id="btnCloseSettings" class="btn-close-icon">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
-          <label for="cfgSheetId">Google Spreadsheet ID</label>
-          <input type="text" id="cfgSheetId" value="1CuPBkl1nq2tUuy2tTtRRLZWrptXRZGuDbFylCDFDZNk" />
+          <label for="cfgApiUrl">URL API Data (Apps Script Web App)</label>
+          <input type="text" id="cfgApiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
         </div>
         <div class="form-row">
           <label for="cfgMyrRate">Kurs 1 Ringgit Malaysia (MYR) ke Rupiah (IDR)</label>
-          <input type="number" id="cfgMyrRate" value="3580" step="10" />
-        </div>
-        <div class="form-row">
-          <label for="cfgFirebaseUrl">Firebase Realtime Database URL (Opsional)</label>
-          <input type="text" id="cfgFirebaseUrl" placeholder="https://project-id-default-rtdb.asia-southeast1.firebasedatabase.app" />
+          <input type="number" id="cfgMyrRate" value="4452" step="1" />
+          <small class="auth-hint" style="color:#64748B;">Default mengikuti kurs di server (Rp4.452, sama dengan spreadsheet). Ubah di sini hanya untuk tampilan di browser ini.</small>
         </div>
       </div>
       <div class="modal-foot">
@@ -278,6 +282,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
