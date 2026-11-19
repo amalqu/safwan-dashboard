@@ -11,7 +11,7 @@
 
 // Tempel URL Web App Apps Script di sini (berakhiran /exec).
 // Boleh dikosongkan: layar login akan meminta URL-nya sekali saja.
-const API_URL_DEFAULT = '';
+const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzx8YqZnUEvAmANZwueuD50DZxvLfupRK0DzVT0RmaolNYxWrJ2smwyi4PxqcRIoc1mjw/exec';
 
 const SESSION_KEY = 'pg_token_v7';
 const DATA_CACHE_KEY = 'pg_data_cache_v7';
