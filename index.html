@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
 
@@ -113,15 +113,33 @@
         <div class="fx-badge hidden" id="fxRateBadge"><span id="fxRateText">Kurs: 1 MYR = Rp4.452</span></div>
       </section>
 
+      <!-- Pilih tampilan: per bulan atau setahun -->
+      <section class="scope-bar" aria-label="Pilih tampilan">
+        <div class="segmented segmented-lg" id="viewScope" role="group" aria-label="Tampilan data">
+          <button type="button" class="seg-btn active" data-scope="month">Per bulan</button>
+          <button type="button" class="seg-btn" data-scope="year">Setahun 2026</button>
+        </div>
+        <button type="button" class="btn btn-soft" id="btnShare" title="Bagikan ringkasan ke WhatsApp">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+          <span>Bagikan</span>
+        </button>
+      </section>
+
       <!-- Filter -->
-      <section class="filters" aria-label="Filter periode">
-        <div class="filter-block">
-          <label for="monthSelector">Periode</label>
+      <section class="filters" id="filtersBox" aria-label="Filter periode">
+        <button type="button" class="filters-toggle" id="btnToggleFilters" aria-expanded="false" aria-controls="filtersPanel">
+          <span class="ft-label">Filter</span>
+          <span class="ft-sum" id="filtersSummary">Periode</span>
+          <svg class="ft-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="filters-panel" id="filtersPanel">
+        <div class="filter-block" id="monthFilterBlock">
+          <label for="monthSelector">Bulan</label>
           <select id="monthSelector" class="select"><option value="">Memuat…</option></select>
         </div>
 
         <div class="filter-block grow" id="customDateWrap">
-          <label>Rentang tanggal</label>
+          <label>Rentang tanggal (target berjalan)</label>
           <div class="filter-row">
             <div class="segmented" id="realtimeDatePresets" role="group" aria-label="Rentang cepat"></div>
             <div class="date-range">
@@ -138,6 +156,7 @@
             <button type="button" class="seg-btn active" id="goldModeDiv3">Dibagi 3</button>
             <button type="button" class="seg-btn" id="goldModeRaw">Riil 100%</button>
           </div>
+        </div>
         </div>
       </section>
 
@@ -159,6 +178,7 @@
 
       <!-- Angka utama -->
       <section id="primaryKpiGrid" class="kpi-grid" aria-label="Angka utama"></section>
+      <div id="kpiDots" class="kpi-dots" aria-hidden="true"></div>
 
       <!-- Konversi Ringgit -->
       <section id="malaysiaFxBanner" class="fx-panel hidden"></section>
@@ -204,6 +224,17 @@
         </div>
       </section>
 
+      <!-- Matriks capaian setahun (hanya tampilan Setahun, ringkasan keseluruhan) -->
+      <section id="yearSection" class="panel hidden">
+        <div class="panel-head">
+          <div>
+            <h2>Capaian tiap entitas per bulan</h2>
+            <p id="yearSectionSub"></p>
+          </div>
+        </div>
+        <div id="yearMatrixBody"></div>
+      </section>
+
       <!-- Tabel -->
       <section class="panel panel-table">
         <div class="panel-head">
@@ -226,11 +257,13 @@
         <div class="howto-body">
           <dl>
             <div><dt>Omset tercapai</dt><dd>Jumlah penjualan yang berhasil. Pesanan batal, cancel, dan return tidak ikut dihitung.</dd></div>
-            <div><dt>Target rentang tanggal</dt><dd>Jumlah hari yang dipilih dikali target harian.</dd></div>
+            <div><dt>Capaian bulan</dt><dd>Omset satu bulan penuh dibagi target bulan itu. Ini angka utama di bagian atas.</dd></div>
+            <div><dt>Target rentang tanggal</dt><dd>Jumlah hari yang dipilih dikali target harian. Ditampilkan sebagai info tambahan.</dd></div>
+            <div><dt>Setahun</dt><dd>Bulan yang sudah lewat memakai total akhir dari spreadsheet "Pencapaian Bulanan". Bulan berjalan dihitung langsung dari data penjualan.</dd></div>
             <div><dt>Perkiraan akhir bulan</dt><dd>Rata-rata omset per hari dikali 30 hari.</dd></div>
             <div><dt>Omset emas (SJP dan PPM)</dt><dd>Penjualan riil dibagi 3. Pakai tombol "Riil 100%" untuk melihat angka sebelum dibagi 3.</dd></div>
             <div><dt>Shopee Malaysia</dt><dd>Dihitung dalam Ringgit lalu dikonversi ke Rupiah dengan kurs di pengaturan.</dd></div>
-            <div><dt>Status capaian</dt><dd>Di atas target: 100% atau lebih. Mendekati target: 70% sampai kurang dari 100%. Di bawah target: kurang dari 70%.</dd></div>
+            <div><dt>Status capaian</dt><dd>Bulan selesai: di atas target 100% atau lebih, mendekati 70% sampai kurang dari 100%, di bawah kurang dari 70%. Bulan berjalan: dibandingkan dengan jalur target (hari berjalan dikali target harian) dengan batas yang sama.</dd></div>
           </dl>
         </div>
       </details>
@@ -264,6 +297,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=8"></script>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
